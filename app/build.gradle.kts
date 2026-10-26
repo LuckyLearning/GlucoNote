@@ -1,7 +1,7 @@
 // 版本号单一来源：改版本只改这两行即可（scripts/release.sh 与 CI 都按此格式解析）。
 // ⚠️ 故意不放进 Version Catalog：release.sh 用 grep 按固定文本格式解析。
-val appVersionName = "1.1.0"
-val appVersionCode = 2
+val appVersionName = "1.1.1"
+val appVersionCode = 3
 
 plugins {
     id("com.android.application")
@@ -97,10 +97,10 @@ androidComponents {
 
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.2")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.2")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.2")
-    implementation("androidx.activity:activity-compose:1.9.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
+    implementation("androidx.activity:activity-compose:1.9.3")
 
     // Compose：BOM 对齐全部 compose-* 版本，下面的库都不带版本号
     val composeBom = platform("androidx.compose:compose-bom:2024.06.00")

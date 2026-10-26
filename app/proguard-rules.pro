@@ -1,4 +1,6 @@
-# GlucoNote 默认保留规则（release 暂未开启混淆）
+# GlucoNote R8 keep rules for startup CompositionLocals
 -keepattributes *Annotation*
 -keep class com.gluconote.** { *; }
+-keep class androidx.lifecycle.compose.** { *; }
+-keepclassmembers class androidx.lifecycle.compose.** { *; }
 -dontwarn androidx.**
