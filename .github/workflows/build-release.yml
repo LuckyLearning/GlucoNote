@@ -1,9 +1,13 @@
 name: Build and Release
 
-# 触发：推送形如 v1.0.0 的 tag 时自动构建并发布；
-# 也支持在 Actions 页面手动 workflow_dispatch 触发（需填 version 输入）。
+# 触发规则：
+#  · 推送到 main 分支            → 仅编译验证（assembleDebug + 单测），确保提交可构建、逻辑无误
+#  · 推送形如 v1.0.0 的 tag      → 构建 Release 包（APK/AAB）并发布到 LuckyLearning/Release
+#  · Actions 页面手动触发         → 构建 Release 包（需填 version 输入）
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
   workflow_dispatch:
@@ -17,8 +21,34 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    name: Build APK/AAB and publish to Release repo
+  # ── 推送到 main：只验证能否编译 + 跑通 JVM 单测，不出包 ──
+  verify:
+    name: Verify build & unit tests
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build debug & run unit tests
+        run: ./gradlew assembleDebug testDebugUnitTest --no-daemon
+
+  # ── 打 tag 或手动触发：构建 Release 包并发布到 LuckyLearning/Release ──
+  release:
+    name: Build release & publish to Release repo
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -53,10 +83,10 @@ jobs:
         with:
           repository: LuckyLearning/Release
           token: ${{ secrets.RELEASE_TOKEN }}
-          tag_name: gluconote-${{ github.ref_name }}
-          name: GlucoNote ${{ github.ref_name }}
+          tag_name: gluconote-${{ github.event.inputs.version || github.ref_name }}
+          name: GlucoNote ${{ github.event.inputs.version || github.ref_name }}
           body: |
-            Automated release of GlucoNote ${{ github.ref_name }}
+            Automated release of GlucoNote ${{ github.event.inputs.version || github.ref_name }}
           files: |
             app/build/outputs/apk/release/*.apk
             app/build/outputs/bundle/release/*.aab

@@ -1,0 +1,66 @@
+<resources>
+    <string name="app_name">血糖随手记</string>
+
+    <string name="period_fasting">空腹</string>
+    <string name="period_fasting_hint">晨起未进食</string>
+    <string name="period_breakfast">早餐后</string>
+    <string name="period_breakfast_hint">进餐后约2小时</string>
+    <string name="period_lunch">午餐后</string>
+    <string name="period_lunch_hint">进餐后约2小时</string>
+    <string name="period_dinner">晚餐后</string>
+    <string name="period_dinner_hint">进餐后约2小时</string>
+    <string name="period_sleep">睡前</string>
+    <string name="period_sleep_hint">入睡前</string>
+
+    <string name="tab_home">首页</string>
+    <string name="tab_records">记录</string>
+    <string name="tab_stats">统计</string>
+    <string name="tab_profile">我的</string>
+
+    <string name="quick_add_title">快速记录</string>
+    <string name="overview_today_count">今日记录</string>
+    <string name="overview_last">最近一次</string>
+    <string name="overview_week_avg">近7天平均</string>
+    <string name="recent_title">最近记录</string>
+
+    <string name="record_add_title">新增记录</string>
+    <string name="record_edit_title">编辑记录</string>
+    <string name="record_measure_time">测量时间（点击可修改）</string>
+    <string name="record_value_hint">血糖值 (mmol/L)</string>
+    <string name="record_note_hint">备注（可选）</string>
+    <string name="record_save">保存记录</string>
+    <string name="record_save_edit">保存修改</string>
+    <string name="record_cancel">取消</string>
+    <string name="record_history">历史记录</string>
+    <string name="record_empty">暂无记录，上方添加第一条</string>
+    <string name="record_delete_title">删除记录</string>
+    <string name="record_delete_msg">确定删除这条记录吗？</string>
+    <string name="record_confirm_title">数值异常提醒</string>
+    <string name="record_confirm_msg">血糖值 %1$s mmol/L 超出常见范围（1.0–50.0），请确认是否输错。仍要保存吗？</string>
+    <string name="record_invalid">请输入有效血糖值</string>
+    <string name="record_saved">已保存</string>
+
+    <string name="stat_filter_all">全部</string>
+    <string name="stat_trend">趋势图</string>
+    <string name="stat_rate_title">达标率（按标签）</string>
+    <string name="stat_bucket_title">年/月/日区间分析</string>
+    <string name="stat_range_title">区间统计</string>
+    <string name="stat_avg">平均</string>
+    <string name="stat_max">最高</string>
+    <string name="stat_min">最低</string>
+    <string name="stat_std">标准差</string>
+    <string name="stat_count">次数</string>
+    <string name="stat_in_range">达标</string>
+
+    <string name="profile_target">目标血糖范围</string>
+    <string name="profile_fasting">空腹 (mmol/L)</string>
+    <string name="profile_post">餐后 (mmol/L)</string>
+    <string name="profile_export">导出 CSV</string>
+    <string name="profile_import">导入备份</string>
+    <string name="profile_about">关于与免责声明</string>
+    <string name="profile_disclaimer">本应用数据仅供个人日常管理参考，不构成医疗建议，不能替代专业医生的诊断与治疗。如有不适请及时就医。</string>
+    <string name="profile_saved">已保存</string>
+    <string name="profile_export_done">已生成 CSV，可分享或发送给医生</string>
+    <string name="profile_import_done">导入完成：新增 %1$d 条</string>
+    <string name="profile_import_failed">导入失败，请检查文件格式</string>
+</resources>
