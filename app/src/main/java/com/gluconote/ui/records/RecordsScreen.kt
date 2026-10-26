@@ -1,6 +1,7 @@
 package com.gluconote.ui.records
 
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,7 +19,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
@@ -250,7 +250,7 @@ private fun OutlinedBox(text: String, modifier: Modifier = Modifier, onClick: ()
     Surface(
         modifier = modifier.clickable { onClick() },
         shape = MaterialTheme.shapes.small,
-        border = ButtonDefaults.outlinedButtonBorder(enabled = true),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         color = MaterialTheme.colorScheme.surface
     ) {
         Box(Modifier.padding(12.dp)) {

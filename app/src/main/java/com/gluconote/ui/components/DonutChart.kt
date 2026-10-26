@@ -39,7 +39,7 @@ fun DonutChart(
             style = DrawStroke(stroke)
         )
         val textPaint = Paint().apply {
-            color = AndroidColor.BLACK
+            this.color = AndroidColor.BLACK
             textAlign = Paint.Align.CENTER
             textSize = 18.dp.toPx()
         }
