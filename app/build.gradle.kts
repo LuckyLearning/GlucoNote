@@ -50,7 +50,8 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.15"
+        // Compose Compiler 1.5.14 与 Kotlin 1.9.24 兼容（1.5.15 需 Kotlin 1.9.25）
+        kotlinCompilerExtensionVersion = "1.5.14"
     }
 
     packaging {
