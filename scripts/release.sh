@@ -99,7 +99,7 @@ git update-ref refs/remotes/origin/main "$(git rev-parse main)"
 # ---- 推后实查：tag 必须真的在远端 ---------------------------------
 owner_repo="$(git remote get-url origin | sed -E 's#.*github.com[:/]##; s#\.git$##')"
 for attempt in 1 2 3; do
-  status="$(curl -fsS -o /dev/null -w '%{http_code}' "https://api.github.com/repos/$owner_repo/git/ref/tags/v$new" 2>/dev/null || echo 000)"
+  status="$(curl -fsS -H "Authorization: Bearer ${_tk:-}" -o /dev/null -w '%{http_code}' "https://api.github.com/repos/$owner_repo/git/ref/tags/v$new" 2>/dev/null || echo 000)"
   if [[ "$status" == "200" ]]; then
     echo "✓ tag v$new 已推送。CI 正在构建，发布产物见 https://github.com/LuckyLearning/Release/tree/main/GlucoNote"
     echo "  验证链：1) Actions 构建成功  2) Release 仓库出现 v$new 目录与 latest.json  3) 应用内「检查更新」能收到 v$new"
