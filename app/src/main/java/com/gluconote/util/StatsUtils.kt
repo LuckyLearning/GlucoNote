@@ -36,7 +36,7 @@ data class Bucket(
     val count: Int
 )
 
-/** 判定某次测量：偏低 / 正常 / 偏高（参考对应标签的目标区间） */
+/** 判断某次测量是偏低 / 正常 / 偏高（参考对应标签的目标区间） */
 fun levelOf(value: Float, periodKey: String, settings: Settings): String {
     val (min, max) = if (periodKey == Period.FASTING.key) {
         settings.fastingMin to settings.fastingMax
@@ -50,13 +50,28 @@ fun levelOf(value: Float, periodKey: String, settings: Settings): String {
     }
 }
 
-/** 趋势点序列（按时间升序），可选按标签筛选 */
+/** 趋势时间窗起点：近 1/7/30/365 天（与区间统计一致，按 DAY_MS 回退） */
+fun rangeWindowStart(rangeType: RangeType, now: Long = System.currentTimeMillis()): Long {
+    val days = when (rangeType) {
+        RangeType.DAY -> 1L
+        RangeType.WEEK -> 7L
+        RangeType.MONTH -> 30L
+        RangeType.YEAR -> 365L
+    }
+    return now - days * DAY_MS
+}
+
+/** 趋势点序列（按时间升序）；按标签筛选，并按 RangeType 裁剪时间窗 */
 fun computeTrend(
     records: List<GlucoseRecord>,
     rangeType: RangeType,
-    filterPeriod: String? = null
+    filterPeriod: String? = null,
+    now: Long = System.currentTimeMillis()
 ): List<TrendPoint> {
-    val list = if (filterPeriod != null) records.filter { it.period == filterPeriod } else records
+    val from = rangeWindowStart(rangeType, now)
+    val list = records.filter {
+        it.measureTime in from..now && (filterPeriod == null || it.period == filterPeriod)
+    }
     return list.sortedBy { it.measureTime }.map {
         val label = when (rangeType) {
             RangeType.DAY -> formatTime(it.measureTime)
@@ -66,7 +81,21 @@ fun computeTrend(
     }
 }
 
-/** 按 5 个标签分别统计达标率（无论是否筛选，始终分组便于横向对比） */
+/** 按 5 个标签分别统计达标率；可先传入已按标签过滤的 records */
+
+/** 标签 + RangeType 时间窗共同裁剪后的记录集（达标率等联动筛选用） */
+fun scopedRecords(
+    records: List<GlucoseRecord>,
+    rangeType: RangeType,
+    filterPeriod: String? = null,
+    now: Long = System.currentTimeMillis()
+): List<GlucoseRecord> {
+    val from = rangeWindowStart(rangeType, now)
+    return records.filter {
+        it.measureTime in from..now && (filterPeriod == null || it.period == filterPeriod)
+    }
+}
+
 fun computeRateByPeriod(
     records: List<GlucoseRecord>,
     settings: Settings
@@ -89,7 +118,7 @@ private fun statsOf(list: List<GlucoseRecord>): StatsResult {
     return StatsResult(avg, max, min, std, list.size)
 }
 
-/** 指定时间区间的聚合统计，可选按标签筛选 */
+/** 指定时间闭区间的聚合统计，可选按标签筛选 */
 fun computeRangeStats(
     records: List<GlucoseRecord>,
     from: Long,
@@ -102,7 +131,7 @@ fun computeRangeStats(
     return statsOf(list)
 }
 
-/** 按年/月/日自然分桶的聚合（均值/极值/达标率），可选按标签筛选 */
+/** 按天/月/年自然桶的聚合（均值/极值/达标率），可选按标签筛选 */
 fun computeBucketStats(
     records: List<GlucoseRecord>,
     granularity: Granularity,

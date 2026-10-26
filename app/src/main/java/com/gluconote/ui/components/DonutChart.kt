@@ -4,6 +4,7 @@ import android.graphics.Paint
 import androidx.compose.foundation.Canvas
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -23,10 +24,19 @@ fun DonutChart(
     val trackColor = MaterialTheme.colorScheme.surfaceVariant
     val textColor = MaterialTheme.colorScheme.onSurface
 
+    val textPaint = remember {
+        Paint().apply {
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+        }
+    }
+    textPaint.color = textColor.toArgb()
+
     Canvas(modifier) {
         val stroke = 11.dp.toPx()
         val r = (size.minDimension - stroke) / 2f
         val c = Offset(size.width / 2f, size.height / 2f)
+        textPaint.textSize = 16.dp.toPx()
         drawCircle(
             color = trackColor,
             radius = r,
@@ -43,12 +53,6 @@ fun DonutChart(
             size = Size(r * 2f, r * 2f),
             style = DrawStroke(stroke)
         )
-        val textPaint = Paint().apply {
-            this.color = textColor.toArgb()
-            textAlign = Paint.Align.CENTER
-            textSize = 16.dp.toPx()
-            isAntiAlias = true
-        }
         drawContext.canvas.nativeCanvas.drawText(
             "${(rate * 100).toInt()}%",
             c.x,

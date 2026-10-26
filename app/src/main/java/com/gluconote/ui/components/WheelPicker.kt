@@ -53,7 +53,7 @@ fun WheelColumn(
 ) {
     require(visibleCount % 2 == 1) { "visibleCount 必须是奇数" }
     val count = values.size
-    val repeats = 101 // 奇数份，正中间开始，两个方向各转 50 圈
+    val repeats = 21 // 奇数份，正中间开始，两个方向各转 50 圈
     val total = count * repeats
     val centerOffset = visibleCount / 2
     val startIndex = (repeats / 2) * count + initialIndex.coerceIn(0, count - 1)

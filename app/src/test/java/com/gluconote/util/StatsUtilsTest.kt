@@ -4,6 +4,7 @@ import com.gluconote.data.model.GlucoseRecord
 import com.gluconote.data.model.Period
 import com.gluconote.data.model.Settings
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.Calendar
 
@@ -67,5 +68,75 @@ class StatsUtilsTest {
         assertEquals(2, buckets.size)
         assertEquals(1, buckets[0].count)
         assertEquals(1, buckets[1].count)
+    }
+
+    @Test
+    fun computeTrend_filtersByTimeWindow() {
+        val now = 1_700_000_000_000L
+        val list = listOf(
+            rec("old", now - 40 * DAY_MS, 6f, Period.FASTING.key),
+            rec("week", now - 3 * DAY_MS, 7f, Period.FASTING.key),
+            rec("today", now - 2 * 60 * 60 * 1000, 8f, Period.BREAKFAST.key)
+        )
+        val year = computeTrend(list, RangeType.YEAR, now = now)
+        assertEquals(3, year.size)
+
+        val month = computeTrend(list, RangeType.MONTH, now = now)
+        assertEquals(2, month.size)
+
+        val week = computeTrend(list, RangeType.WEEK, now = now)
+        assertEquals(2, week.size)
+
+        val day = computeTrend(list, RangeType.DAY, now = now)
+        assertEquals(1, day.size)
+        assertEquals("today", day[0].let { list.first { r -> r.measureTime == it.ts }.id })
+    }
+
+    @Test
+    fun computeTrend_filtersByPeriod() {
+        val now = 1_700_000_000_000L
+        val list = listOf(
+            rec("1", now - DAY_MS / 2, 6f, Period.FASTING.key),
+            rec("2", now - DAY_MS / 3, 7f, Period.BREAKFAST.key)
+        )
+        val fasting = computeTrend(list, RangeType.WEEK, filterPeriod = Period.FASTING.key, now = now)
+        assertEquals(1, fasting.size)
+        assertEquals(Period.FASTING.key, fasting[0].period)
+    }
+
+    @Test
+    fun rangeWindowStart_matchesDayCounts() {
+        val now = 1_000_000L
+        assertEquals(now - DAY_MS, rangeWindowStart(RangeType.DAY, now))
+        assertEquals(now - 7 * DAY_MS, rangeWindowStart(RangeType.WEEK, now))
+        assertEquals(now - 30 * DAY_MS, rangeWindowStart(RangeType.MONTH, now))
+        assertEquals(now - 365 * DAY_MS, rangeWindowStart(RangeType.YEAR, now))
+        assertTrue(rangeWindowStart(RangeType.YEAR, now) < rangeWindowStart(RangeType.MONTH, now))
+    }
+
+    @Test
+    fun scopedRecords_and_rate_followTimeWindow() {
+        val now = 1_700_000_000_000L
+        val list = listOf(
+            rec("old", now - 200 * DAY_MS, 6f, Period.FASTING.key),
+            rec("mid", now - 20 * DAY_MS, 8f, Period.FASTING.key),
+            rec("week", now - 2 * DAY_MS, 8f, Period.FASTING.key),
+            rec("today", now - 2 * 60 * 60 * 1000L, 8f, Period.FASTING.key)
+        )
+        val yearScoped = scopedRecords(list, RangeType.YEAR, now = now)
+        val weekScoped = scopedRecords(list, RangeType.WEEK, now = now)
+        val dayScoped = scopedRecords(list, RangeType.DAY, now = now)
+
+        assertEquals(4, yearScoped.size)
+        assertEquals(2, weekScoped.size)
+        assertEquals(1, dayScoped.size)
+
+        val yearRate = computeRateByPeriod(yearScoped, settings)[Period.FASTING]!!
+        val dayRate = computeRateByPeriod(dayScoped, settings)[Period.FASTING]!!
+        assertEquals(4, yearRate.total)
+        assertEquals(1, yearRate.inRange) // only "old" (6f) in range for fasting
+        assertEquals(1, dayRate.total)
+        assertEquals(0, dayRate.inRange) // 8f high for fasting
+        assertTrue(yearRate.total > dayRate.total)
     }
 }
