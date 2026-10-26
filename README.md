@@ -21,6 +21,7 @@ Android 原生 App（Kotlin + Jetpack Compose + Room），本地记录每日血�
 | [技术方案设计](docs/血糖随手记-设计方案.md) | 架构、包结构、数据层、图表实现 |
 | [版本与更新](docs/版本与更新.md) | 版本号规则、发版流程、分发仓库、应用内更新机制 |
 | [发布与 CI 说明](docs/发布与CI.md) | CI 流水线、Secrets、本地构建环境、验证链 |
+| [签名密钥管理](docs/签名密钥管理.md) | keystore 生成/备份/配置、验签、常见故障 |
 | [UI 原型（可交互 HTML）](docs/ui-prototype.html) | 4 屏原型演示 |
 
 ## 开发
