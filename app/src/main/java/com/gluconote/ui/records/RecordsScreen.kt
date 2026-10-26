@@ -1,5 +1,11 @@
 package com.gluconote.ui.records
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,6 +54,7 @@ import androidx.navigation.NavController
 import com.gluconote.data.model.GlucoseRecord
 import com.gluconote.data.model.Period
 import com.gluconote.ui.components.RecordCard
+import com.gluconote.ui.theme.Motion
 import com.gluconote.util.formatDate
 import kotlinx.coroutines.launch
 
@@ -89,18 +96,26 @@ fun RecordsScreen(navController: NavController) {
         },
         floatingActionButton = {
             Column(horizontalAlignment = Alignment.End) {
-                if (showScrollTop) {
-                    SmallFloatingActionButton(
-                        onClick = { scope.launch { listState.animateScrollToItem(0) } },
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                    ) {
-                        Icon(
-                            Icons.Filled.KeyboardArrowUp,
-                            contentDescription = "回到顶部"
-                        )
+                AnimatedVisibility(
+                    visible = showScrollTop,
+                    enter = fadeIn(animationSpec = tween(Motion.FabMs)) +
+                        scaleIn(initialScale = 0.85f, animationSpec = tween(Motion.FabMs)),
+                    exit = fadeOut(animationSpec = tween(160)) +
+                        scaleOut(targetScale = 0.85f, animationSpec = tween(160))
+                ) {
+                    Column(horizontalAlignment = Alignment.End) {
+                        SmallFloatingActionButton(
+                            onClick = { scope.launch { listState.animateScrollToItem(0) } },
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        ) {
+                            Icon(
+                                Icons.Filled.KeyboardArrowUp,
+                                contentDescription = "回到顶部"
+                            )
+                        }
+                        Spacer(Modifier.height(12.dp))
                     }
-                    Spacer(Modifier.height(12.dp))
                 }
                 FloatingActionButton(
                     onClick = { navController.navigate("add") { launchSingleTop = true } },

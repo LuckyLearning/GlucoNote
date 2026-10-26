@@ -1,5 +1,6 @@
 package com.gluconote.ui.stats
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,6 +30,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gluconote.data.model.Period
 import com.gluconote.ui.components.DonutChart
 import com.gluconote.ui.components.TrendLineChart
+import com.gluconote.ui.theme.Motion
 import com.gluconote.ui.theme.NormalColorLight
 import com.gluconote.util.Granularity
 import com.gluconote.util.RangeType
@@ -85,10 +87,16 @@ fun StatsScreen() {
                     }
                 }
                 Spacer(Modifier.height(12.dp))
-                if (ui.trend.isEmpty()) {
-                    Text("\u8be5\u9009\u8303\u56f4\u6682\u65e0\u6570\u636e", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                } else {
-                    TrendLineChart(points = ui.trend, settings = ui.settings, modifier = Modifier.fillMaxWidth())
+                AnimatedContent(
+                    targetState = Triple(ui.rangeType, ui.filterPeriod, ui.trend.size),
+                    transitionSpec = { Motion.contentTransform() },
+                    label = "trend"
+                ) { _ ->
+                    if (ui.trend.isEmpty()) {
+                        Text("\u8be5\u9009\u8303\u56f4\u6682\u65e0\u6570\u636e", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    } else {
+                        TrendLineChart(points = ui.trend, settings = ui.settings, modifier = Modifier.fillMaxWidth())
+                    }
                 }
             }
         }
@@ -103,7 +111,12 @@ fun StatsScreen() {
                 }
                 Text(rateTitle, style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(12.dp))
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                AnimatedContent(
+                    targetState = Pair(ui.filterPeriod, ui.rangeType),
+                    transitionSpec = { Motion.contentTransform() },
+                    label = "rate"
+                ) { _ ->
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     ui.ratePeriods.forEach { p ->
                         val r = ui.rateMap[p] ?: RateResult(0, 0)
                         if (ui.filterPeriod == null && r.total == 0) return@forEach
@@ -131,6 +144,7 @@ fun StatsScreen() {
                             }
                         }
                     }
+                    }
                 }
             }
         }
@@ -150,10 +164,15 @@ fun StatsScreen() {
                     }
                 }
                 Spacer(Modifier.height(12.dp))
-                if (ui.buckets.isEmpty()) {
-                    Text("\u6682\u65e0\u6570\u636e", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                AnimatedContent(
+                    targetState = Pair(ui.granularity, ui.filterPeriod),
+                    transitionSpec = { Motion.contentTransform() },
+                    label = "buckets"
+                ) { _ ->
+                    if (ui.buckets.isEmpty()) {
+                        Text("\u6682\u65e0\u6570\u636e", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    } else {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         ui.buckets.forEach { b ->
                             Card(
                                 Modifier.fillMaxWidth(),
@@ -172,6 +191,7 @@ fun StatsScreen() {
                                     )
                                 }
                             }
+                        }
                         }
                     }
                 }

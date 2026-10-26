@@ -1,6 +1,5 @@
 package com.gluconote.ui.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -43,7 +42,8 @@ fun RecordCard(
     onDelete: (() -> Unit)? = null
 ) {
     Card(
-        modifier.then(Modifier.fillMaxWidth().clickable(onClick = onClick)),
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         shape = MaterialTheme.shapes.medium

@@ -231,9 +231,8 @@ private fun QuickAddTile(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = modifier
-            .heightIn(min = 56.dp)
-            .clickable(onClick = onClick),
+        onClick = onClick,
+        modifier = modifier.heightIn(min = 56.dp),
         shape = MaterialTheme.shapes.extraLarge,
         color = MaterialTheme.colorScheme.primaryContainer,
         tonalElevation = 0.dp
