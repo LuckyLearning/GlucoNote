@@ -44,7 +44,7 @@ fun parseCsv(text: String): List<GlucoseRecord> {
             val time = CSV_SDF.parse(cols[1])?.time ?: continue
             val value = cols[2].toFloatOrNull() ?: continue
             val period = cols[3]
-            val note = cols.getOrNull(4) ?: ""
+            val note = cols.getOrNull(5) ?: ""
             out.add(
                 GlucoseRecord(
                     id = cols[0].ifBlank { UUID.randomUUID().toString() },
