@@ -150,16 +150,16 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew clean assembleRelease --no-daemon
 
-      # 统一产物命名：GlucoNote-v<版本>.apk（应用内更新按清单里的 file 字段下载）
+      # 统一产物命名：GlucoNote-v<版本>.apk（应用内更新按清单里的 file 字段下载）。
+      # Gradle 侧已产出该名字，这里按版本号强制落成一份，避免发出 app-release.apk 这种无名包。
       - name: Collect artifacts
+        env:
+          TARGET: ${{ github.event.inputs.version || github.ref_name }}
         run: |
+          VER="${TARGET#v}"
           mkdir -p dist
-          cp app/build/outputs/apk/release/*.apk dist/
-          cd dist
-          for f in *.apk; do
-            [[ "$f" == "GlucoNote-"* ]] || mv "$f" "GlucoNote-${GITHUB_REF_NAME#v}.apk"
-          done
-          ls -la
+          cp app/build/outputs/apk/release/*.apk "dist/GlucoNote-v${VER}.apk"
+          ls -la dist
 
       - name: Write release notes
         env:
@@ -171,7 +171,7 @@ jobs:
 
           发布时间：$(date -u '+%Y-%m-%d %H:%M UTC')
 
-          - 安装包：GlucoNote-${VER}.apk（全架构通用）
+          - 安装包：GlucoNote-v${VER}.apk（全架构通用）
           - 更新方式：应用内「我的 → 版本更新 → 检查更新」，或从发布页直接下载
           EOF
           cat /tmp/notes.md

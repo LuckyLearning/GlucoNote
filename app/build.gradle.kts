@@ -35,7 +35,10 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // R8：删未引用代码 + 混淆 + 压缩资源。
+            // 关掉时 dex 里会连 Compose 的未用部分一起打进去（实测差 3~4 倍体积）。
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -79,6 +82,19 @@ android {
     }
 }
 
+// 产物命名：GlucoNote-v<版本>[-debug].apk
+// 默认的 app-release.apk 名字里既没有应用名也没有版本号，分发时全靠流水线临时改名，
+// 一旦改名失败就会发出一个叫 app-release.apk 的包。这里让 Gradle 直接产出最终名字。
+androidComponents {
+    onVariants { variant ->
+        val suffix = if (variant.buildType == "release") "" else "-${variant.buildType}"
+        variant.outputs.forEach { output ->
+            (output as? com.android.build.api.variant.impl.VariantOutputImpl)
+                ?.outputFileName?.set("GlucoNote-v$appVersionName$suffix.apk")
+        }
+    }
+}
+
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.2")
@@ -90,12 +106,14 @@ dependencies {
     val composeBom = platform("androidx.compose:compose-bom:2024.06.00")
     implementation(composeBom)
     implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.material3:material3-window-size-class")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material:material-icons-extended")
+    // 只要核心图标集（Home/Person/Delete/List 等约 40 个）。
+    // 注意：不要换成 material-icons-extended —— 它会把约 1500 个图标全编进 dex，
+    // 实测让 APK 从 ~3MB 涨到 11MB。缺图标就在 ui/icons/AppIcons.kt 里自绘。
+    implementation("androidx.compose.material:material-icons-core")
 
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("androidx.room:room-runtime:2.6.1")

@@ -62,12 +62,39 @@ sed -i "s/^val appVersionName = .*/val appVersionName = \"$new\"/" "$FILE"
 sed -i "s/^val appVersionCode = .*/val appVersionCode = $newcode/" "$FILE"
 grep -nE 'appVersion(Name|Code) = ' "$FILE"
 
+# ---- 本地先出一次签名包（R8 + 签名 + 产物命名全链路验证）------------
+# 只把「本地构建过的代码」推上去，避免 CI 反复红。
+if [[ -f .toolchain/keystore/keystore.properties && -f .toolchain/keystore/gluconote.jks ]]; then
+  echo "→ 本地构建 Release 包 ..."
+  _pw="$(grep STORE_PASSWORD .toolchain/keystore/keystore.properties | cut -d= -f2)"
+  KEYSTORE_PATH="$PWD/.toolchain/keystore/gluconote.jks" \
+  KEYSTORE_PASSWORD="$_pw" KEY_ALIAS=gluconote KEY_PASSWORD="$_pw" \
+    ./gradlew assembleRelease --offline -q || { echo "✗ Release 构建失败，中止发版"; exit 1; }
+  _apk="app/build/outputs/apk/release/GlucoNote-v$new.apk"
+  if [[ -f "$_apk" ]]; then
+    echo "  ✓ 产物：$_apk（$(du -h "$_apk" | cut -f1)）"
+  else
+    echo "✗ 没有产出预期命名的 APK：$_apk"; ls app/build/outputs/apk/release/; exit 1
+  fi
+else
+  echo "  跳过本地构建（未找到 .toolchain/keystore）—— 依赖 CI 构建"
+fi
+
 # ---- 提交 + tag + 推送 --------------------------------------------
 git add "$FILE"
 git commit -m "release: v$new"
 git tag "v$new"
 echo "→ 推送 main 与 tag v$new ..."
-git push origin main "v$new"
+# origin 刻意不存凭据（防止 token 落进 .git/config）；有 .github-token 就一次性授权
+if [[ -f .github-token ]]; then
+  _tk="$(tr -d '\r\n' < .github-token)"
+  git -c credential.helper= \
+      -c http.https://github.com/.extraheader="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$_tk" | base64 -w0)" \
+      push origin main "v$new"
+else
+  git push origin main "v$new"
+fi
+git update-ref refs/remotes/origin/main "$(git rev-parse main)"
 
 # ---- 推后实查：tag 必须真的在远端 ---------------------------------
 owner_repo="$(git remote get-url origin | sed -E 's#.*github.com[:/]##; s#\.git$##')"

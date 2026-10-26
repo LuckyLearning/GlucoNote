@@ -1,9 +1,8 @@
 package com.gluconote.ui.main
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.ListAlt
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -24,6 +23,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.gluconote.ui.home.HomeScreen
+import com.gluconote.ui.icons.AppIcons
 import com.gluconote.ui.profile.ProfileScreen
 import com.gluconote.ui.records.RecordsScreen
 import com.gluconote.ui.stats.StatsScreen
@@ -34,8 +34,8 @@ sealed class Screen(
     val icon: ImageVector
 ) {
     object Home : Screen("home", "首页", Icons.Filled.Home)
-    object Records : Screen("records?period={period}", "记录", Icons.Filled.ListAlt)
-    object Stats : Screen("stats", "统计", Icons.Filled.BarChart)
+    object Records : Screen("records?period={period}", "记录", Icons.Filled.List)
+    object Stats : Screen("stats", "统计", AppIcons.BarChart)
     object Profile : Screen("profile", "我的", Icons.Filled.Person)
 }
 
