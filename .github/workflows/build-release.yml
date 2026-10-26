@@ -83,12 +83,16 @@ jobs:
       # 发版闸门：tag 必须与 app/build.gradle.kts 里的 appVersionName 一致，
       # 否则应用内更新（比对 BuildConfig.VERSION_NAME 与 latest.json）会乱套。
       - name: Check tag & versionName consistency
+        env:
+          # tag 触发时取 ref_name（v1.0.0）；手动触发时取 inputs.version。
+          # 两者都用同一表达式，避免手动触发时把分支名 main 当成版本号。
+          TARGET: ${{ github.event.inputs.version || github.ref_name }}
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${TARGET#v}"
           FILE_VERSION=$(grep -E '^val appVersionName = ' app/build.gradle.kts | head -1 | grep -o '[0-9][0-9.]*')
-          echo "tag=$GITHUB_REF_NAME -> version=$VERSION ; appVersionName=$FILE_VERSION"
+          echo "target=$TARGET -> version=$VERSION ; appVersionName=$FILE_VERSION"
           if [[ "$VERSION" != "$FILE_VERSION" ]]; then
-            echo "::error::tag 版本（$VERSION）与 appVersionName（$FILE_VERSION）不一致"
+            echo "::error::版本（$VERSION）与 appVersionName（$FILE_VERSION）不一致"
             echo "::error::请把 app/build.gradle.kts 的 val appVersionName 改为 \"$VERSION\" 后重新打 tag，或用 scripts/release.sh 发版"
             exit 1
           fi
@@ -158,13 +162,16 @@ jobs:
           ls -la
 
       - name: Write release notes
+        env:
+          TARGET: ${{ github.event.inputs.version || github.ref_name }}
         run: |
+          VER="${TARGET#v}"
           cat > /tmp/notes.md <<EOF
-          ## 血糖随手记 GlucoNote ${GITHUB_REF_NAME}
+          ## 血糖随手记 GlucoNote v${VER}
 
           发布时间：$(date -u '+%Y-%m-%d %H:%M UTC')
 
-          - 安装包：GlucoNote-${GITHUB_REF_NAME#v}.apk（全架构通用）
+          - 安装包：GlucoNote-${VER}.apk（全架构通用）
           - 更新方式：应用内「我的 → 版本更新 → 检查更新」，或从发布页直接下载
           EOF
           cat /tmp/notes.md
@@ -173,6 +180,8 @@ jobs:
       - name: Publish to LuckyLearning/Release
         env:
           VERSION: "${{ github.event.inputs.version || github.ref_name }}"
+          # 脚本按这个变量名取 token
+          RELEASE_REPO_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: |
           VERSION="${VERSION#v}"
           CODE=$(grep -E '^val appVersionCode = ' app/build.gradle.kts | head -1 | grep -o '[0-9][0-9]*')
