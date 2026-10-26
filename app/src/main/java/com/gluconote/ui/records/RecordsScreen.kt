@@ -15,45 +15,43 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.gluconote.data.model.GlucoseRecord
 import com.gluconote.data.model.Period
 import com.gluconote.ui.components.PeriodChips
-import com.gluconote.ui.theme.statusColor
+import com.gluconote.ui.components.RecordCard
+import com.gluconote.ui.components.WheelTimeDialog
 import com.gluconote.util.formatDate
-import com.gluconote.util.formatDateTime
 import com.gluconote.util.formatTime
 import java.util.Calendar
 
@@ -70,105 +68,114 @@ fun RecordsScreen(navController: NavController, periodArg: String) {
         if (periodArg.isNotBlank()) vm.initPeriod(periodArg)
     }
 
+    // ── 输入态放本地：逐字输入不再触发整个页面重组（卡顿主因之一）──
+    var valueText by rememberSaveable { mutableStateOf("") }
+    var noteText by rememberSaveable { mutableStateOf("") }
+    LaunchedEffect(ui.editingId) {
+        valueText = ui.editingInitialValue
+        noteText = ui.editingInitialNote
+    }
+
     var confirmValue by remember { mutableStateOf<Float?>(null) }
     var deleting by remember { mutableStateOf<GlucoseRecord?>(null) }
 
-    val grouped = records.groupBy { formatDate(it.measureTime) }.toList()
+    // 分组结果随 records 记忆化：只在数据真变化时重算（原先每次重组都跑一遍 groupBy）
+    val grouped = remember(records) { records.groupBy { formatDate(it.measureTime) } }
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item {
-            Card(elevation = CardDefaults.cardElevation(2.dp)) {
-                Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                    Text(
-                        if (ui.editingId != null) "编辑记录" else "新增记录",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    PeriodChips(selected = Period.fromKey(ui.periodKey), onSelect = { vm.setPeriod(it.key) })
-                    Spacer(Modifier.height(12.dp))
-                    Text("测量时间（点击可修改）", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
-                    Row(
-                        Modifier.fillMaxWidth().padding(top = 6.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedBox(formatDate(ui.measureTime), Modifier.weight(1f)) { vm.showDatePicker(true) }
-                        OutlinedBox(formatTime(ui.measureTime), Modifier.weight(1f)) { vm.showTimePicker(true) }
-                    }
-                    Spacer(Modifier.height(12.dp))
-                    OutlinedTextField(
-                        value = ui.valueText,
-                        onValueChange = vm::setValue,
-                        label = { Text("血糖值 (mmol/L)") },
-                        placeholder = { Text("如 6.2") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                    Spacer(Modifier.height(10.dp))
-                    OutlinedTextField(
-                        value = ui.note,
-                        onValueChange = vm::setNote,
-                        label = { Text("备注") },
-                        placeholder = { Text("可选，如 吃了面条") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                    Spacer(Modifier.height(14.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(
-                            onClick = {
-                                val v = ui.valueText.toFloatOrNull()
-                                when {
-                                    v == null || v <= 0f -> Toast.makeText(context, "请输入有效血糖值", Toast.LENGTH_SHORT).show()
-                                    v < 1.0f || v > 50.0f -> confirmValue = v
-                                    else -> vm.commit(v) { Toast.makeText(context, "已保存", Toast.LENGTH_SHORT).show() }
-                                }
-                            },
+        item(key = "form") {
+            ElevatedSection(title = if (ui.editingId != null) "编辑记录" else "新增记录") {
+                PeriodChips(selected = Period.fromKey(ui.periodKey), onSelect = { vm.setPeriod(it.key) })
+                Spacer(Modifier.height(12.dp))
+                Text("测量时间（点击修改）", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(
+                    Modifier.fillMaxWidth().padding(top = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FieldBox(formatDate(ui.measureTime), Modifier.weight(1f)) { vm.showDatePicker(true) }
+                    FieldBox(formatTime(ui.measureTime), Modifier.weight(1f)) { vm.showTimePicker(true) }
+                }
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = valueText,
+                    onValueChange = { valueText = it },
+                    label = { Text("血糖值 (mmol/L)") },
+                    placeholder = { Text("如 6.2") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = MaterialTheme.shapes.small
+                )
+                Spacer(Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = noteText,
+                    onValueChange = { noteText = it },
+                    label = { Text("备注") },
+                    placeholder = { Text("可选，如 吃了面条") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = MaterialTheme.shapes.small
+                )
+                Spacer(Modifier.height(14.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = {
+                            val v = valueText.toFloatOrNull()
+                            when {
+                                v == null || v <= 0f ->
+                                    Toast.makeText(context, "请输入有效血糖值", Toast.LENGTH_SHORT).show()
+                                v < 1.0f || v > 50.0f -> confirmValue = v
+                                else -> vm.commit(v, noteText) { Toast.makeText(context, "已保存", Toast.LENGTH_SHORT).show() }
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = MaterialTheme.shapes.small
+                    ) { Text(if (ui.editingId != null) "保存修改" else "保存记录") }
+                    if (ui.editingId != null) {
+                        TextButton(
+                            onClick = vm::reset,
                             modifier = Modifier.weight(1f)
-                        ) { Text(if (ui.editingId != null) "保存修改" else "保存记录") }
-                        if (ui.editingId != null) {
-                            TextButton(onClick = vm::reset, modifier = Modifier.weight(1f)) { Text("取消") }
-                        }
+                        ) { Text("取消") }
                     }
                 }
             }
         }
 
-        item { Text("历史记录", style = MaterialTheme.typography.titleMedium) }
-        if (grouped.isEmpty()) {
-            item { Text("暂无记录，上方添加第一条", color = MaterialTheme.colorScheme.outline) }
+        item(key = "history-title") {
+            Text("历史记录", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 4.dp))
         }
-        grouped.forEach { (date, items) ->
-            item { Text(date, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline) }
-            items(items, key = { it.id }) { r ->
-                Card(
-                    Modifier.fillMaxWidth().clickable { vm.startEdit(r) },
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                ) {
-                    Row(
-                        Modifier.fillMaxWidth().padding(12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text("${formatTime(r.measureTime)} · ${Period.fromKey(r.period).plainLabel()}", style = MaterialTheme.typography.bodyMedium)
-                            Text(formatDateTime(r.measureTime), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
-                            if (r.note.isNotEmpty()) Text(r.note, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("%.1f".format(r.value), color = statusColor(r.value, r.period, settings), style = MaterialTheme.typography.titleMedium)
-                            IconButton(onClick = { deleting = r }) {
-                                Icon(Icons.Filled.Delete, contentDescription = "删除", tint = MaterialTheme.colorScheme.outline)
-                            }
-                        }
-                    }
+
+        if (grouped.isEmpty()) {
+            item(key = "empty") {
+                Box(Modifier.fillMaxWidth().padding(vertical = 32.dp), contentAlignment = Alignment.Center) {
+                    Text("暂无记录，上方添加第一条", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Spacer(Modifier.height(8.dp))
             }
         }
+
+        grouped.forEach { (date, items) ->
+            item(key = "date-$date") {
+                Text(
+                    date,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(top = 4.dp, start = 4.dp)
+                )
+            }
+            items(items, key = { it.id }, contentType = { "record" }) { r ->
+                RecordCard(
+                    record = r,
+                    settings = settings,
+                    onClick = { vm.startEdit(r) },
+                    onDelete = { deleting = r }
+                )
+            }
+        }
+
+        item(key = "bottom-space") { Spacer(Modifier.height(8.dp)) }
     }
 
     confirmValue?.let { v ->
@@ -179,7 +186,7 @@ fun RecordsScreen(navController: NavController, periodArg: String) {
             confirmButton = {
                 TextButton(onClick = {
                     confirmValue = null
-                    vm.commit(v) { Toast.makeText(context, "已保存", Toast.LENGTH_SHORT).show() }
+                    vm.commit(v, noteText) { Toast.makeText(context, "已保存", Toast.LENGTH_SHORT).show() }
                 }) { Text("仍然保存") }
             },
             dismissButton = { TextButton(onClick = { confirmValue = null }) { Text("取消") } }
@@ -224,37 +231,49 @@ fun RecordsScreen(navController: NavController, periodArg: String) {
     }
 
     if (ui.showTimePicker) {
-        val src = Calendar.getInstance().apply { timeInMillis = ui.measureTime }
-        val state = rememberTimePickerState(initialHour = src.get(Calendar.HOUR_OF_DAY), initialMinute = src.get(Calendar.MINUTE))
-        AlertDialog(
-            onDismissRequest = { vm.showTimePicker(false) },
-            confirmButton = {
-                TextButton(onClick = {
-                    val merged = Calendar.getInstance().apply {
-                        timeInMillis = ui.measureTime
-                        set(Calendar.HOUR_OF_DAY, state.hour)
-                        set(Calendar.MINUTE, state.minute)
-                    }
-                    vm.setMeasureTime(merged.timeInMillis)
-                    vm.showTimePicker(false)
-                }) { Text("确定") }
+        WheelTimeDialog(
+            initialTimeMillis = ui.measureTime,
+            onConfirm = { h, m ->
+                val merged = Calendar.getInstance().apply {
+                    timeInMillis = ui.measureTime
+                    set(Calendar.HOUR_OF_DAY, h)
+                    set(Calendar.MINUTE, m)
+                }
+                vm.setMeasureTime(merged.timeInMillis)
+                vm.showTimePicker(false)
             },
-            dismissButton = { TextButton(onClick = { vm.showTimePicker(false) }) { Text("取消") } },
-            text = { TimePicker(state) }
+            onDismiss = { vm.showTimePicker(false) }
         )
     }
 }
 
+/** 通用小节卡片 */
 @Composable
-private fun OutlinedBox(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+private fun ElevatedSection(title: String, content: @Composable () -> Unit) {
+    Card(
+        Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(Modifier.fillMaxWidth().padding(16.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(12.dp))
+            content()
+        }
+    }
+}
+
+@Composable
+private fun FieldBox(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Surface(
-        modifier = modifier.clickable { onClick() },
+        modifier = modifier.clickable(onClick = onClick),
         shape = MaterialTheme.shapes.small,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        color = MaterialTheme.colorScheme.surface
+        color = MaterialTheme.colorScheme.surfaceContainerLowest
     ) {
-        Box(Modifier.padding(12.dp)) {
-            Text(text)
+        Box(Modifier.padding(horizontal = 12.dp, vertical = 12.dp)) {
+            Text(text, style = MaterialTheme.typography.bodyLarge, fontSize = 15.sp)
         }
     }
 }

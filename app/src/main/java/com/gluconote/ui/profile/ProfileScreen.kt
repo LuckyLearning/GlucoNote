@@ -1,37 +1,47 @@
 package com.gluconote.ui.profile
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import android.os.Build
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.gluconote.util.CrashGuard
 import kotlinx.coroutines.launch
 import java.io.InputStreamReader
 
@@ -43,9 +53,9 @@ fun ProfileScreen(navController: NavController) {
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
 
-    val exportLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.CreateDocument("text/csv")
-    ) { uri: Uri? ->
+    val exportLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.CreateDocument("text/csv")
+    ) { uri ->
         uri ?: return@rememberLauncherForActivityResult
         scope.launch {
             val text = vm.exportText()
@@ -56,9 +66,9 @@ fun ProfileScreen(navController: NavController) {
         }
     }
 
-    val importLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.OpenDocument()
-    ) { uri: Uri? ->
+    val importLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
+    ) { uri ->
         uri ?: return@rememberLauncherForActivityResult
         scope.launch {
             try {
@@ -74,67 +84,143 @@ fun ProfileScreen(navController: NavController) {
 
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
         Column(
-            Modifier.fillMaxSize().padding(padding).padding(16.dp).verticalScroll(rememberScrollState()),
+            Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("我的", style = MaterialTheme.typography.headlineSmall)
+            Text("我的", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 8.dp))
 
-            Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                    Text("目标血糖范围", style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.padding(8.dp))
-                    NumberField("空腹下限", ui.fastingMinText, vm::setFastingMin)
-                    NumberField("空腹上限", ui.fastingMaxText, vm::setFastingMax)
-                    NumberField("餐后下限", ui.postMinText, vm::setPostMin)
-                    NumberField("餐后上限", ui.postMaxText, vm::setPostMax)
-                    Spacer(Modifier.padding(8.dp))
-                    Button(
-                        onClick = { vm.save { scope.launch { snackbar.showSnackbar("已保存") } } },
-                        modifier = Modifier.fillMaxWidth()
-                    ) { Text("保存目标范围") }
+            SectionCard("目标血糖范围") {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    NumberField("空腹下限", ui.fastingMinText, vm::setFastingMin, Modifier.weight(1f))
+                    NumberField("空腹上限", ui.fastingMaxText, vm::setFastingMax, Modifier.weight(1f))
                 }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    NumberField("餐后下限", ui.postMinText, vm::setPostMin, Modifier.weight(1f))
+                    NumberField("餐后上限", ui.postMaxText, vm::setPostMax, Modifier.weight(1f))
+                }
+                Spacer(Modifier.height(6.dp))
+                Button(
+                    onClick = { vm.save { scope.launch { snackbar.showSnackbar("已保存") } } },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.small
+                ) { Text("保存目标范围") }
             }
 
-            Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                    Text("数据备份", style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.padding(8.dp))
+            SectionCard("数据备份") {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(
                         onClick = { exportLauncher.launch("gluconote_export.csv") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.weight(1f),
+                        shape = MaterialTheme.shapes.small
                     ) { Text("导出 CSV") }
-                    Spacer(Modifier.padding(8.dp))
                     Button(
                         onClick = { importLauncher.launch(arrayOf("text/csv", "*/*")) },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.weight(1f),
+                        shape = MaterialTheme.shapes.small
                     ) { Text("导入备份") }
                 }
             }
 
             UpdateCard()
+            DiagnosticsCard()
 
-            Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                    Text("关于与免责声明", style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.padding(8.dp))
-                    Text(
-                        "本应用数据仅供个人日常管理参考，不构成医疗建议，不能替代专业医生的诊断与治疗。如有不适请及时就医。",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
+            SectionCard("关于与免责声明") {
+                Text(
+                    "本应用数据仅供个人日常管理参考，不构成医疗建议，不能替代专业医生的诊断与治疗。如有不适请及时就医。",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
+
+            Spacer(Modifier.height(8.dp))
         }
     }
 }
 
+/** 小节卡片：统一外观（圆角、零阴影、浅底） */
 @Composable
-private fun NumberField(label: String, value: String, onValue: (String) -> Unit) {
+private fun SectionCard(title: String, content: @Composable () -> Unit) {
+    Card(
+        Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.fillMaxWidth().padding(16.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(12.dp))
+            content()
+        }
+    }
+}
+
+/** 诊断卡片：设备信息 + 崩溃日志查看/复制/清除（配合 CrashGuard） */
+@Composable
+private fun DiagnosticsCard() {
+    val context = LocalContext.current
+    var crashText by remember { mutableStateOf(CrashGuard.lastCrashFile(context.applicationContext as android.app.Application)?.readText()) }
+    var showCrash by remember { mutableStateOf(false) }
+
+    SectionCard("诊断") {
+        Text(
+            "设备：${Build.MANUFACTURER} ${Build.MODEL}\n" +
+                "系统：Android ${Build.VERSION.RELEASE}（API ${Build.VERSION.SDK_INT}）",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(10.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(
+                onClick = {
+                    val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    cm.setPrimaryClip(
+                        ClipData.newPlainText(
+                            "gluconote-diagnostics",
+                            "${Build.MANUFACTURER} ${Build.MODEL} / Android ${Build.VERSION.RELEASE}(API ${Build.VERSION.SDK_INT})"
+                        )
+                    )
+                    Toast.makeText(context, "设备信息已复制", Toast.LENGTH_SHORT).show()
+                }
+            ) { Text("复制设备信息") }
+            if (crashText != null) {
+                TextButton(onClick = { showCrash = true }) { Text("查看崩溃日志", color = MaterialTheme.colorScheme.error) }
+                TextButton(onClick = {
+                    CrashGuard.clear(context.applicationContext as android.app.Application)
+                    crashText = null
+                    Toast.makeText(context, "已清除", Toast.LENGTH_SHORT).show()
+                }) { Text("清除") }
+            }
+        }
+    }
+
+    if (showCrash && crashText != null) {
+        AlertDialog(
+            onDismissRequest = { showCrash = false },
+            title = { Text("最近一次崩溃") },
+            text = {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    Text(crashText!!, style = MaterialTheme.typography.bodySmall)
+                }
+            },
+            confirmButton = { TextButton(onClick = { showCrash = false }) { Text("关闭") } }
+        )
+    }
+}
+
+@Composable
+private fun NumberField(
+    label: String,
+    value: String,
+    onValue: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
     OutlinedTextField(
         value = value,
         onValueChange = onValue,
         label = { Text(label) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        singleLine = true
+        modifier = modifier.padding(vertical = 2.dp),
+        singleLine = true,
+        shape = MaterialTheme.shapes.small
     )
 }

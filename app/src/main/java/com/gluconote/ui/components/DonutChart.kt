@@ -1,8 +1,8 @@
 package com.gluconote.ui.components
 
-import android.graphics.Color as AndroidColor
 import android.graphics.Paint
 import androidx.compose.foundation.Canvas
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -10,20 +10,25 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke as DrawStroke
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 
+/** 达标率环形图：底环 + 进度弧 + 中心百分比（文字颜色随主题） */
 @Composable
 fun DonutChart(
     rate: Float,
     modifier: Modifier = Modifier,
     color: Color = Color(0xFF4CAF50)
 ) {
+    val trackColor = MaterialTheme.colorScheme.surfaceVariant
+    val textColor = MaterialTheme.colorScheme.onSurface
+
     Canvas(modifier) {
-        val stroke = 12.dp.toPx()
+        val stroke = 11.dp.toPx()
         val r = (size.minDimension - stroke) / 2f
         val c = Offset(size.width / 2f, size.height / 2f)
         drawCircle(
-            color = Color.LightGray.copy(alpha = 0.4f),
+            color = trackColor,
             radius = r,
             center = c,
             style = DrawStroke(stroke)
@@ -39,14 +44,15 @@ fun DonutChart(
             style = DrawStroke(stroke)
         )
         val textPaint = Paint().apply {
-            this.color = AndroidColor.BLACK
+            this.color = textColor.toArgb()
             textAlign = Paint.Align.CENTER
-            textSize = 18.dp.toPx()
+            textSize = 16.dp.toPx()
+            isAntiAlias = true
         }
         drawContext.canvas.nativeCanvas.drawText(
             "${(rate * 100).toInt()}%",
             c.x,
-            c.y + 6.dp.toPx(),
+            c.y + 5.dp.toPx(),
             textPaint
         )
     }
