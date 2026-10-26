@@ -34,6 +34,10 @@ local.properties
 # Keystore & signing (never commit)
 *.jks
 *.keystore
+*.jks.base64
+
+# 本地签名材料与工具链目录（keystore / 口令 / base64 导出）—— 绝不入库
+.toolchain/
 
 # Local GitHub token (never commit) — used for local push only
 .github-token

@@ -93,9 +93,50 @@ jobs:
             exit 1
           fi
 
+      # 前置校验：缺任一 Secret 时给出明确提示，而不是等到签名阶段抛 KeytoolException
+      # （空 KEYSTORE_BASE64 会解出一个 0 字节文件，报错是「Failed to read key  from store ...」，
+      #  极难定位；空 KEY_ALIAS 则表现为「Failed to read key 」（key 名是空的））
+      - name: Check signing secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          missing=()
+          [[ -n "$KEYSTORE_BASE64"   ]] || missing+=("KEYSTORE_BASE64")
+          [[ -n "$KEYSTORE_PASSWORD" ]] || missing+=("KEYSTORE_PASSWORD")
+          [[ -n "$KEY_ALIAS"         ]] || missing+=("KEY_ALIAS")
+          [[ -n "$KEY_PASSWORD"      ]] || missing+=("KEY_PASSWORD")
+          if (( ${#missing[@]} > 0 )); then
+            echo "::error::缺少签名相关的 Secrets: ${missing[*]}"
+            echo "::error::请在 GlucoNote 仓库 → Settings → Secrets and variables → Actions 中配置"
+            echo "::error::说明见 docs/版本与更新.md §8 与 docs/发布与CI.md §4"
+            exit 1
+          fi
+          echo "✓ 签名 Secrets 已配置（KEY_ALIAS=${KEY_ALIAS}）"
+
       - name: Decode signing keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > "${{ github.workspace }}/gluconote-release.keystore"
+          SIZE=$(stat -c%s "${{ github.workspace }}/gluconote-release.keystore")
+          echo "keystore 大小: $SIZE 字节"
+          # JKS 文件以 FEEDFACE/FEEDFEEB 开头，PKCS12 以 ASN.1 SEQUENCE (0x30) 开头
+          if (( SIZE < 1000 )); then
+            echo "::error::解码出的 keystore 只有 $SIZE 字节，KEYSTORE_BASE64 可能不完整或为空"
+            exit 1
+          fi
+
+      - name: Verify keystore is readable
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: |
+          # 先单独验一次，把「密钥库坏了」与「Gradle 配置错了」区分开。
+          # -storetype 不写死，让 keytool 自己嗅探 JKS / PKCS12。
+          keytool -list -keystore "${{ github.workspace }}/gluconote-release.keystore" \
+                  -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" \
+            || { echo "::error::keytool 无法读取该 keystore —— 请确认 KEYSTORE_BASE64 / KEYSTORE_PASSWORD / KEY_ALIAS 三者匹配"; exit 1; }
 
       - name: Build release APK
         env:
