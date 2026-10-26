@@ -1,0 +1,42 @@
+# Built application files
+*.apk
+*.aar
+*.ap_
+*.aab
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+bin/
+gen/
+out/
+captures/
+
+# Gradle files
+.gradle/
+build/
+
+# Local configuration (SDK path, etc.)
+local.properties
+
+# Log/OS files
+*.log
+
+# Android Studio / IntelliJ
+*.iml
+.idea/
+.DS_Store
+
+# Keystore & signing (never commit)
+*.jks
+*.keystore
+
+# Local GitHub token (never commit) — used for local push only
+.github-token
+
+# CodeCrew task runs
+.agent-runs/

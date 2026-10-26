@@ -1,0 +1,62 @@
+name: Build and Release
+
+# 触发：推送形如 v1.0.0 的 tag 时自动构建并发布；
+# 也支持在 Actions 页面手动 workflow_dispatch 触发（需填 version 输入）。
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version tag, e.g. v1.0.0'
+        required: true
+        default: 'v1.0.0'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build APK/AAB and publish to Release repo
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Decode signing keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > "${{ github.workspace }}/gluconote-release.keystore"
+
+      - name: Build release artifacts
+        env:
+          KEYSTORE_PATH: ${{ github.workspace }}/gluconote-release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew clean assembleRelease bundleRelease --no-daemon
+
+      - name: Publish to LuckyLearning/Release
+        uses: softprops/action-gh-release@v2
+        with:
+          repository: LuckyLearning/Release
+          token: ${{ secrets.RELEASE_TOKEN }}
+          tag_name: gluconote-${{ github.ref_name }}
+          name: GlucoNote ${{ github.ref_name }}
+          body: |
+            Automated release of GlucoNote ${{ github.ref_name }}
+          files: |
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/bundle/release/*.aab
