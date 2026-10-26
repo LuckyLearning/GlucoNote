@@ -2,7 +2,7 @@ name: Build and Release
 
 # 触发规则：
 #  · 推送到 main 分支            → 仅编译验证（assembleDebug + 单测），确保提交可构建、逻辑无误
-#  · 推送形如 v1.0.0 的 tag      → 构建 Release 包（APK/AAB）并发布到 LuckyLearning/Release
+#  · 推送形如 v1.0.0 的 tag      → 构建 Release 包并发布到公共分发仓库 LuckyLearning/Release
 #  · Actions 页面手动触发         → 构建 Release 包（需填 version 输入）
 on:
   push:
@@ -53,7 +53,7 @@ jobs:
       - name: Build debug & run unit tests
         run: ./gradlew assembleDebug testDebugUnitTest --no-daemon
 
-  # ── 打 tag 或手动触发：构建 Release 包并发布到 LuckyLearning/Release ──
+  # ── 打 tag 或手动触发：构建签名包并发布到公共分发仓库 ──
   release:
     name: Build release & publish to Release repo
     if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
@@ -80,27 +80,60 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      # 发版闸门：tag 必须与 app/build.gradle.kts 里的 appVersionName 一致，
+      # 否则应用内更新（比对 BuildConfig.VERSION_NAME 与 latest.json）会乱套。
+      - name: Check tag & versionName consistency
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          FILE_VERSION=$(grep -E '^val appVersionName = ' app/build.gradle.kts | head -1 | grep -o '[0-9][0-9.]*')
+          echo "tag=$GITHUB_REF_NAME -> version=$VERSION ; appVersionName=$FILE_VERSION"
+          if [[ "$VERSION" != "$FILE_VERSION" ]]; then
+            echo "::error::tag 版本（$VERSION）与 appVersionName（$FILE_VERSION）不一致"
+            echo "::error::请把 app/build.gradle.kts 的 val appVersionName 改为 \"$VERSION\" 后重新打 tag，或用 scripts/release.sh 发版"
+            exit 1
+          fi
+
       - name: Decode signing keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > "${{ github.workspace }}/gluconote-release.keystore"
 
-      - name: Build release artifacts
+      - name: Build release APK
         env:
           KEYSTORE_PATH: ${{ github.workspace }}/gluconote-release.keystore
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew clean assembleRelease bundleRelease --no-daemon
+        run: ./gradlew clean assembleRelease --no-daemon
 
+      # 统一产物命名：GlucoNote-v<版本>.apk（应用内更新按清单里的 file 字段下载）
+      - name: Collect artifacts
+        run: |
+          mkdir -p dist
+          cp app/build/outputs/apk/release/*.apk dist/
+          cd dist
+          for f in *.apk; do
+            [[ "$f" == "GlucoNote-"* ]] || mv "$f" "GlucoNote-${GITHUB_REF_NAME#v}.apk"
+          done
+          ls -la
+
+      - name: Write release notes
+        run: |
+          cat > /tmp/notes.md <<EOF
+          ## 血糖随手记 GlucoNote ${GITHUB_REF_NAME}
+
+          发布时间：$(date -u '+%Y-%m-%d %H:%M UTC')
+
+          - 安装包：GlucoNote-${GITHUB_REF_NAME#v}.apk（全架构通用）
+          - 更新方式：应用内「我的 → 版本更新 → 检查更新」，或从发布页直接下载
+          EOF
+          cat /tmp/notes.md
+
+      # 发布到公共分发仓库：latest.json + 版本目录（只保留最近 5 个版本）
       - name: Publish to LuckyLearning/Release
-        uses: softprops/action-gh-release@v2
-        with:
-          repository: LuckyLearning/Release
-          token: ${{ secrets.RELEASE_TOKEN }}
-          tag_name: gluconote-${{ github.event.inputs.version || github.ref_name }}
-          name: GlucoNote ${{ github.event.inputs.version || github.ref_name }}
-          body: |
-            Automated release of GlucoNote ${{ github.event.inputs.version || github.ref_name }}
-          files: |
-            app/build/outputs/apk/release/*.apk
-            app/build/outputs/bundle/release/*.aab
+        env:
+          VERSION: "${{ github.event.inputs.version || github.ref_name }}"
+        run: |
+          VERSION="${VERSION#v}"
+          CODE=$(grep -E '^val appVersionCode = ' app/build.gradle.kts | head -1 | grep -o '[0-9][0-9]*')
+          VERSION="$VERSION" CODE="$CODE" NOTES_PATH=/tmp/notes.md DIST_DIR=dist \
+            bash scripts/publish-release-repo.sh

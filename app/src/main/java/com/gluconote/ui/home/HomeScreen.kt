@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
@@ -44,9 +43,9 @@ fun HomeScreen(navController: NavController) {
 
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OverviewCard("今日记录", state.todayCount.toString())
-                OverviewCard("最近一次", state.lastValue?.let { "%.1f".format(it) } ?: "--")
-                OverviewCard("近7天平均", if (state.weekAvg > 0) "%.1f".format(state.weekAvg) else "--")
+                OverviewCard("今日记录", state.todayCount.toString(), Modifier.weight(1f))
+                OverviewCard("最近一次", state.lastValue?.let { "%.1f".format(it) } ?: "--", Modifier.weight(1f))
+                OverviewCard("近7天平均", if (state.weekAvg > 0) "%.1f".format(state.weekAvg) else "--", Modifier.weight(1f))
             }
         }
 
@@ -104,9 +103,9 @@ fun HomeScreen(navController: NavController) {
 }
 
 @Composable
-private fun OverviewCard(title: String, value: String) {
+private fun OverviewCard(title: String, value: String, modifier: Modifier = Modifier) {
     Card(
-        Modifier.weight(1f).height(80.dp),
+        modifier.height(80.dp),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column(

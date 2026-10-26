@@ -1,3 +1,8 @@
+// 版本号单一来源：改版本只改这两行即可（scripts/release.sh 与 CI 都按此格式解析）。
+// ⚠️ 故意不放进 Version Catalog：release.sh 用 grep 按固定文本格式解析。
+val appVersionName = "1.0.0"
+val appVersionCode = 1
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -12,9 +17,20 @@ android {
         applicationId = "com.gluconote"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = appVersionCode
+        versionName = appVersionName
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // 应用内更新：读公共分发仓库 LuckyLearning/Release 下的 GlucoNote/latest.json
+        buildConfigField("String", "RELEASE_OWNER", "\"LuckyLearning\"")
+        buildConfigField("String", "RELEASE_REPO", "\"Release\"")
+        buildConfigField("String", "RELEASE_BRANCH", "\"main\"")
+        buildConfigField("String", "RELEASE_APP_DIR", "\"GlucoNote\"")
+        buildConfigField(
+            "String",
+            "RELEASE_PAGE_URL",
+            "\"https://github.com/LuckyLearning/Release/tree/main/GlucoNote\""
+        )
     }
 
     buildTypes {
@@ -47,6 +63,8 @@ android {
 
     buildFeatures {
         compose = true
+        // 应用内更新需要读取 BuildConfig.VERSION_NAME / RELEASE_*
+        buildConfig = true
     }
 
     composeOptions {
@@ -67,19 +85,24 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.2")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.2")
     implementation("androidx.activity:activity-compose:1.9.1")
-    implementation("androidx.compose.material3:material3:1.2.1")
-    implementation("androidx.compose.material3:material3-window-size-class:1.2.1")
-    implementation("androidx.compose.ui:ui:1.6.8")
-    implementation("androidx.compose.ui:ui-graphics:1.6.8")
-    implementation("androidx.compose.foundation:foundation:1.6.8")
-    implementation("androidx.compose.ui:ui-tooling-preview:1.6.8")
+
+    // Compose：BOM 对齐全部 compose-* 版本，下面的库都不带版本号
+    val composeBom = platform("androidx.compose:compose-bom:2024.06.00")
+    implementation(composeBom)
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material3:material3-window-size-class")
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-graphics")
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.material:material-icons-extended")
+
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
-    implementation("androidx.compose.material:material-icons-extended:1.6.8")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")

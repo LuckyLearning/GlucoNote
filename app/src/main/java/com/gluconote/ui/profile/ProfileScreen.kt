@@ -111,6 +111,8 @@ fun ProfileScreen(navController: NavController) {
                 }
             }
 
+            UpdateCard()
+
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(16.dp)) {
                     Text("关于与免责声明", style = MaterialTheme.typography.titleMedium)

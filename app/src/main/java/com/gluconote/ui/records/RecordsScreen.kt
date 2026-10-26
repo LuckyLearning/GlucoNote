@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
@@ -32,7 +31,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.OutlinedButtonDefaults
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
@@ -96,8 +94,8 @@ fun RecordsScreen(navController: NavController, periodArg: String) {
                         Modifier.fillMaxWidth().padding(top = 6.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        OutlinedBox(formatDate(ui.measureTime)) { vm.showDatePicker(true) }
-                        OutlinedBox(formatTime(ui.measureTime)) { vm.showTimePicker(true) }
+                        OutlinedBox(formatDate(ui.measureTime), Modifier.weight(1f)) { vm.showDatePicker(true) }
+                        OutlinedBox(formatTime(ui.measureTime), Modifier.weight(1f)) { vm.showTimePicker(true) }
                     }
                     Spacer(Modifier.height(12.dp))
                     OutlinedTextField(
@@ -248,11 +246,11 @@ fun RecordsScreen(navController: NavController, periodArg: String) {
 }
 
 @Composable
-private fun OutlinedBox(text: String, onClick: () -> Unit) {
+private fun OutlinedBox(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Surface(
-        modifier = Modifier.clickable { onClick() }.weight(1f),
+        modifier = modifier.clickable { onClick() },
         shape = MaterialTheme.shapes.small,
-        border = OutlinedButtonDefaults.outlinedButtonBorder(enabled = true),
+        border = ButtonDefaults.outlinedButtonBorder(enabled = true),
         color = MaterialTheme.colorScheme.surface
     ) {
         Box(Modifier.padding(12.dp)) {

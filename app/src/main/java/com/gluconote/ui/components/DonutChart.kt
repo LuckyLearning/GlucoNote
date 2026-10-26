@@ -1,5 +1,6 @@
 package com.gluconote.ui.components
 
+import android.graphics.Color as AndroidColor
 import android.graphics.Paint
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
@@ -38,7 +39,7 @@ fun DonutChart(
             style = DrawStroke(stroke)
         )
         val textPaint = Paint().apply {
-            color = android.graphics.Color.BLACK
+            color = AndroidColor.BLACK
             textAlign = Paint.Align.CENTER
             textSize = 18.dp.toPx()
         }

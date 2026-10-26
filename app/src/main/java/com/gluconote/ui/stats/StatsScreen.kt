@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
@@ -131,16 +130,16 @@ fun StatsScreen() {
             Text("区间统计", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                RangeCard("近7天", range7)
-                RangeCard("近30天", range30)
+                RangeCard("近7天", range7, Modifier.weight(1f))
+                RangeCard("近30天", range30, Modifier.weight(1f))
             }
         }
     }
 }
 
 @Composable
-private fun RangeCard(title: String, s: com.gluconote.util.StatsResult) {
-    Card(Modifier.weight(1f)) {
+private fun RangeCard(title: String, s: com.gluconote.util.StatsResult, modifier: Modifier = Modifier) {
+    Card(modifier) {
         Column(Modifier.padding(12.dp)) {
             Text(title, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
             Spacer(Modifier.height(4.dp))
