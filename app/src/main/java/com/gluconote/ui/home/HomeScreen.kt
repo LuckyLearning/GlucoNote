@@ -61,7 +61,7 @@ fun HomeScreen(navController: NavController) {
             HeroCard(
                 lastValue = state.lastValue,
                 lastPeriod = state.lastPeriod,
-                lastTime = state.recent.firstOrNull()?.measureTime,
+                lastTime = state.lastTime,
                 todayCount = state.todayCount,
                 weekAvg = state.weekAvg
             )

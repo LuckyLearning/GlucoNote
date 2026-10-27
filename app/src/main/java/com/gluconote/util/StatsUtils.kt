@@ -156,3 +156,77 @@ fun computeBucketStats(
         Bucket(key, s.avg, s.max, s.min, rate, recs.size)
     }
 }
+
+// =====================================================================
+// 以下为「SQL 聚合版」的纯函数配套，集中放在这里便于单测打桩。
+// 任何一条都不得改变上面内存版的语义 —— 两端必须逐值一致。
+// =====================================================================
+
+/** 趋势图最大点数：超过就按自然日降采样，否则每个点都画数值标签会糊成一片 */
+const val MAX_TREND_POINTS = 400
+
+/** 期望点数超过 [MAX_TREND_POINTS] 才降采样 */
+fun shouldDownsample(pointCount: Int): Boolean = pointCount > MAX_TREND_POINTS
+
+/**
+ * 分桶统计的输入窗口起点。
+ *
+ * 分桶留在 Kotlin 实现（可测性 + 不必处理 SQLite `localtime` 的时区/DST 坑），
+ * 但必须限制输入规模，否则「按日」会把整表读进内存：
+ * DAY → 60 天、MONTH → 24 个月、YEAR → 10 年。
+ */
+fun bucketWindowStart(granularity: Granularity, now: Long = System.currentTimeMillis()): Long {
+    val days = when (granularity) {
+        Granularity.DAY -> 60L
+        Granularity.MONTH -> 730L
+        Granularity.YEAR -> 3650L
+    }
+    return now - days * DAY_MS
+}
+
+/** 趋势点的时间标签：1 天窗口显示时分，其余显示日期 */
+fun trendLabel(rangeType: RangeType, ts: Long): String = when (rangeType) {
+    RangeType.DAY -> formatTime(ts)
+    else -> formatDate(ts)
+}
+
+/**
+ * SQL `SUM(CASE WHEN ... value BETWEEN ...)` 的等价纯函数。
+ *
+ * `BETWEEN a AND b` 是闭区间，等价于 `value in a..b`（`>= a && <= b`），
+ * 与 [levelOf] 的 `< min` / `> max` 判定边界一致；单测用同组数据对拍两端。
+ */
+fun isInRangeBySqlRule(
+    value: Float,
+    periodKey: String,
+    fMin: Float,
+    fMax: Float,
+    pMin: Float,
+    pMax: Float
+): Boolean =
+    if (periodKey == Period.FASTING.key) value in fMin..fMax else value in pMin..pMax
+
+/**
+ * 用二阶矩还原标准差：`std = sqrt(avgSq - avg²)`。
+ *
+ * SQLite 没有 `STDDEV`，只能让 SQL 同时给 `AVG(value)` 和 `AVG(value*value)`。
+ * 浮点误差可能让方差算出极小的负数，必须 `coerceAtLeast(0f)`，否则 `sqrt` 得到 NaN。
+ */
+fun statsFromMoments(
+    count: Int,
+    valueAvg: Float?,
+    valueMax: Float?,
+    valueMin: Float?,
+    valueAvgSq: Float?
+): StatsResult {
+    if (count <= 0 || valueAvg == null) return StatsResult(0f, 0f, 0f, 0f, 0)
+    val meanOfSquares = valueAvgSq ?: (valueAvg * valueAvg)
+    val variance = (meanOfSquares - valueAvg * valueAvg).coerceAtLeast(0f)
+    return StatsResult(
+        avg = valueAvg,
+        max = valueMax ?: valueAvg,
+        min = valueMin ?: valueAvg,
+        std = sqrt(variance),
+        count = count
+    )
+}
