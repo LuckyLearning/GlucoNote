@@ -3,12 +3,14 @@ package com.gluconote.ui.profile
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -22,6 +24,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.gluconote.update.UpdateCheckResult
 import com.gluconote.update.UpdateChecker
@@ -33,14 +36,18 @@ import java.io.File
 private sealed interface UpdateUiState {
     data object Idle : UpdateUiState
     data object Checking : UpdateUiState
-    data class Message(val text: String) : UpdateUiState
-    data class Available(val info: UpdateInfo) : UpdateUiState
-    data class Downloading(val received: Long, val total: Long) : UpdateUiState
+    data class Info(val text: String) : UpdateUiState
+    data class Available(val info: UpdateInfo, val route: String) : UpdateUiState
+    data class Downloading(val received: Long, val total: Long, val route: String) : UpdateUiState
     data class Downloaded(val info: UpdateInfo, val apk: File) : UpdateUiState
+    data class Failed(val text: String) : UpdateUiState
 }
 
 /**
  * 「我的」页的更新卡片：检查更新 → 弹窗确认 → 下载（带进度）→ 拉起安装器。
+ *
+ * 检查与下载都走 UpdateChecker 的多线路（直连 / 加速代理 / CDN 镜像），
+ * 国内不挂 VPN 也能更新；全部线路都不通时提供「浏览器打开发布页」兜底。
  */
 @Composable
 fun UpdateCard() {
@@ -48,20 +55,32 @@ fun UpdateCard() {
     val scope = rememberCoroutineScope()
     var state by remember { mutableStateOf<UpdateUiState>(UpdateUiState.Idle) }
 
-    Card(Modifier.fillMaxWidth()) {
+    Card(
+        Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
         Column(Modifier.fillMaxWidth().padding(16.dp)) {
-            Text("版本更新", style = MaterialTheme.typography.titleMedium)
-            androidx.compose.foundation.layout.Spacer(Modifier.height(4.dp))
+            Text("版本更新", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(4.dp))
             Text(
                 "当前版本 ${UpdateChecker.currentVersion}",
                 style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                "内置多条加速线路，无需 VPN",
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.outline
             )
-            androidx.compose.foundation.layout.Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(10.dp))
 
             when (val s = state) {
                 is UpdateUiState.Checking -> {
                     LinearProgressIndicator(Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(6.dp))
                     Text("正在检查更新…", style = MaterialTheme.typography.bodySmall)
                 }
                 is UpdateUiState.Downloading -> {
@@ -70,9 +89,14 @@ fun UpdateCard() {
                         progress = { fraction },
                         modifier = Modifier.fillMaxWidth()
                     )
+                    Spacer(Modifier.height(6.dp))
                     Text(
-                        "正在下载 ${UpdateChecker.formatSize(s.received)}" +
-                            if (s.total > 0) " / ${UpdateChecker.formatSize(s.total)}" else "",
+                        buildString {
+                            append("正在下载 ")
+                            append(UpdateChecker.formatSize(s.received))
+                            if (s.total > 0) append(" / ").append(UpdateChecker.formatSize(s.total))
+                            if (s.route.isNotBlank()) append("　·　").append(s.route)
+                        },
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -80,53 +104,69 @@ fun UpdateCard() {
             }
 
             when (val s = state) {
-                is UpdateUiState.Message -> Text(
+                is UpdateUiState.Info -> Text(
                     s.text,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline
+                    style = MaterialTheme.typography.bodyMedium
                 )
                 is UpdateUiState.Available -> Text(
                     "发现新版本 ${s.info.version}" +
                         (UpdateChecker.formatSize(s.info.apkSizeBytes)
-                            .takeIf { it.isNotBlank() }?.let { " · $it" } ?: ""),
+                            .takeIf { it.isNotBlank() }?.let { " · $it" } ?: "") +
+                        "　·　${s.route}",
                     style = MaterialTheme.typography.bodyMedium
                 )
                 is UpdateUiState.Downloaded -> Text(
                     "已下载 ${s.info.version}，可以安装",
                     style = MaterialTheme.typography.bodyMedium
                 )
+                is UpdateUiState.Failed -> Text(
+                    s.text,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
                 else -> Unit
             }
 
-            androidx.compose.foundation.layout.Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(
                     onClick = {
                         scope.launch {
                             state = UpdateUiState.Checking
                             state = when (val r = UpdateChecker.checkLatest()) {
-                                is UpdateCheckResult.Available -> UpdateUiState.Available(r.info)
+                                is UpdateCheckResult.Available ->
+                                    UpdateUiState.Available(r.info, r.route)
                                 is UpdateCheckResult.UpToDate ->
-                                    UpdateUiState.Message("已是最新版本（${r.latestVersion}）")
-                                is UpdateCheckResult.Failed ->
-                                    UpdateUiState.Message("${r.reason}\n可到浏览器打开发布页手动下载")
+                                    UpdateUiState.Info("已是最新版本（${r.latestVersion}）")
+                                is UpdateCheckResult.Failed -> UpdateUiState.Failed(r.reason)
                             }
                         }
                     },
+                    shape = MaterialTheme.shapes.small,
                     enabled = state !is UpdateUiState.Checking && state !is UpdateUiState.Downloading
                 ) { Text("检查更新") }
 
                 if (state is UpdateUiState.Downloaded) {
-                    OutlinedButton(onClick = {
-                        val s = state as UpdateUiState.Downloaded
-                        if (UpdateChecker.canInstall(context)) {
-                            UpdateChecker.install(context, s.apk)
-                        } else {
-                            UpdateChecker.unknownSourcesIntent(context)?.let {
-                                runCatching { context.startActivity(it) }
+                    OutlinedButton(
+                        onClick = {
+                            val s = state as UpdateUiState.Downloaded
+                            if (UpdateChecker.canInstall(context)) {
+                                UpdateChecker.install(context, s.apk)
+                            } else {
+                                UpdateChecker.unknownSourcesIntent(context)?.let {
+                                    runCatching { context.startActivity(it) }
+                                }
                             }
-                        }
-                    }) { Text("安装") }
+                        },
+                        shape = MaterialTheme.shapes.small
+                    ) { Text("安装") }
+                }
+
+                if (state is UpdateUiState.Failed) {
+                    OutlinedButton(
+                        onClick = { UpdateChecker.openReleasePage(context) },
+                        shape = MaterialTheme.shapes.small
+                    ) { Text("浏览器打开") }
                 }
             }
         }
@@ -149,16 +189,24 @@ fun UpdateCard() {
             },
             confirmButton = {
                 TextButton(onClick = {
-                    state = UpdateUiState.Downloading(0, info.apkSizeBytes)
+                    state = UpdateUiState.Downloading(0, info.apkSizeBytes, "")
                     scope.launch {
                         try {
-                            val apk = UpdateChecker.download(context, info) { received, total ->
-                                state = UpdateUiState.Downloading(received, total)
-                            }
+                            val apk = UpdateChecker.download(
+                                context = context,
+                                info = info,
+                                onProgress = { received, total ->
+                                    val route = (state as? UpdateUiState.Downloading)?.route.orEmpty()
+                                    state = UpdateUiState.Downloading(received, total, route)
+                                },
+                                onRoute = { route ->
+                                    state = UpdateUiState.Downloading(0, info.apkSizeBytes, route)
+                                }
+                            )
                             state = UpdateUiState.Downloaded(info, apk)
                         } catch (t: Throwable) {
-                            state = UpdateUiState.Message(
-                                "下载失败：${t.message ?: "网络异常"}\n可在浏览器打开发布页手动下载"
+                            state = UpdateUiState.Failed(
+                                "下载失败：${t.message ?: "网络异常"}，可点「浏览器打开」手动下载"
                             )
                         }
                     }
