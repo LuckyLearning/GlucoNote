@@ -31,6 +31,15 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+
+/**
+ * 一次「从外部把滚轮滚到某一格」的请求。
+ *
+ * [token] 让同样的目标值也能重复触发（例如连点两次「用现在的时间」），
+ * 避免父级为此重建整列（重建会丢掉吸附动画并闪过一下）。
+ */
+data class WheelScroll(val targetIndex: Int, val token: Int)
 
 /**
  * 闹钟式滚轮选择器（参考系统时钟 App 的交互）：
@@ -41,6 +50,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
  * @param values 选项文本（顺序即取值顺序）
  * @param initialIndex 初始选中下标
  * @param onValueChange 停在某个选项时回调（下标）
+ * @param scrollRequest 外部请求滚动到某格（不用 key 重建整列）
  */
 @Composable
 fun WheelColumn(
@@ -49,7 +59,8 @@ fun WheelColumn(
     onValueChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
     visibleCount: Int = 5,
-    itemHeight: Dp = 44.dp
+    itemHeight: Dp = 44.dp,
+    scrollRequest: WheelScroll? = null
 ) {
     require(visibleCount % 2 == 1) { "visibleCount 必须是奇数" }
     val count = values.size
@@ -71,12 +82,30 @@ fun WheelColumn(
     }
 
     LaunchedEffect(count) {
+        var lastTickAt = 0L
         snapshotFlow { listState.firstVisibleItemIndex }
             .distinctUntilChanged()
+            .drop(1) // 首帧那次是初始位置，不必回调
             .collect {
-                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                // 快速滑动时每格都震会变成"嗡嗡"，压到 50ms 一次轻 tick
+                val now = android.os.SystemClock.elapsedRealtime()
+                if (now - lastTickAt >= 50L) {
+                    lastTickAt = now
+                    haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                }
                 onValueChange((it + centerOffset).mod(count))
             }
+    }
+
+    // 外部请求：沿最短路径滚过去（不重建 LazyColumn，保留吸附动画）
+    LaunchedEffect(scrollRequest) {
+        val req = scrollRequest ?: return@LaunchedEffect
+        val current = listState.firstVisibleItemIndex
+        val currentMod = (current + centerOffset).mod(count)
+        var delta = req.targetIndex.coerceIn(0, count - 1) - currentMod
+        if (delta > count / 2) delta -= count
+        if (delta < -count / 2) delta += count
+        if (delta != 0) listState.animateScrollToItem(current + delta)
     }
 
     Box(modifier, contentAlignment = Alignment.Center) {

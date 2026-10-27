@@ -30,8 +30,7 @@ data class AddRecordUiState(
     val showDatePicker: Boolean = false,
     /** 引导步骤 0 选状态 / 1 选日期 / 2 选时间 / 3 血糖值；编辑模式忽略 */
     val step: Int = 0,
-    /** 首页时段捷径进入：跳过选状态，从选日期开始；返回到第 1 步再退则退出 */
-    val skipPeriodStep: Boolean = false,
+    /** 按当前钟点推算的推荐标签，界面上打「推荐」角标 */
     val recommendedPeriodKey: String = Period.FASTING.key,
     val settings: Settings = Settings()
 )
@@ -43,8 +42,8 @@ class AddRecordViewModel(app: android.app.Application) : AndroidViewModel(app) {
     private val _ui = MutableStateFlow(AddRecordUiState())
     val ui: StateFlow<AddRecordUiState> = _ui.asStateFlow()
 
-    /** [periodArg] 来自首页快捷入口；[idArg] 来自列表编辑。 */
-    fun bootstrap(periodArg: String, idArg: String) {
+    /** [idArg] 非空表示编辑已有记录。 */
+    fun bootstrap(idArg: String) {
         if (_ui.value.ready) return
         viewModelScope.launch {
             val settings = runCatching { settingsRepo.settingsFlow.first() }.getOrDefault(Settings())
@@ -67,13 +66,11 @@ class AddRecordViewModel(app: android.app.Application) : AndroidViewModel(app) {
                     return@launch
                 }
             }
-            val fromShortcut = periodArg.isNotBlank()
             _ui.update {
                 it.copy(
-                    periodKey = if (fromShortcut) periodArg else recommended,
+                    periodKey = recommended,
                     measureTime = System.currentTimeMillis(),
-                    step = if (fromShortcut) 1 else 0,
-                    skipPeriodStep = fromShortcut,
+                    step = 0,
                     recommendedPeriodKey = recommended,
                     settings = settings,
                     ready = true
@@ -85,22 +82,34 @@ class AddRecordViewModel(app: android.app.Application) : AndroidViewModel(app) {
     fun setPeriod(key: String) = _ui.update { it.copy(periodKey = key) }
     fun setMeasureTime(ts: Long) = _ui.update { it.copy(measureTime = ts) }
     fun showDatePicker(s: Boolean) = _ui.update { it.copy(showDatePicker = s) }
-    fun setStep(step: Int) = _ui.update { it.copy(step = step.coerceIn(0, 3)) }
-
-    fun nextStep() = _ui.update { it.copy(step = (it.step + 1).coerceAtMost(3)) }
 
     /**
-     * @return true 表示应退出页面（已在第一步）
+     * 步骤闸门（前进）：只有 [expected] 与当前 step 一致时才前进。
+     *
+     * 连点两下「下一步」、或快速连击时，第二下会被直接丢弃，不会"跳步"
+     * （旧实现只做 coerceAtMost，连点会一次跳两级、跳过选日期）。
+     * 它同时是界面判定转场方向的唯一依据。
+     *
+     * @return true 表示确实前进了
      */
-    fun goBackOrExit(): Boolean {
+    fun advanceFrom(expected: Int): Boolean {
         val s = _ui.value
-        val minStep = if (s.skipPeriodStep) 1 else 0
-        return if (s.step <= minStep) {
-            true
-        } else {
-            _ui.update { it.copy(step = it.step - 1) }
-            false
-        }
+        if (s.step != expected || expected >= LAST_STEP) return false
+        _ui.update { it.copy(step = expected + 1) }
+        return true
+    }
+
+    /**
+     * 步骤闸门（后退）。
+     *
+     * @return true 表示已经在第一步、应当退出页面
+     */
+    fun backFrom(expected: Int): Boolean {
+        val s = _ui.value
+        if (s.step != expected) return false
+        if (expected <= 0) return true
+        _ui.update { it.copy(step = expected - 1) }
+        return false
     }
 
     fun setDateToToday() {
@@ -155,6 +164,9 @@ class AddRecordViewModel(app: android.app.Application) : AndroidViewModel(app) {
     }
 
     companion object {
+        /** 引导最后一步（血糖值） */
+        const val LAST_STEP = 3
+
         /** 按当前钟点推荐测量标签（对齐适老原型启发式，映射到 App 现有 Period）。 */
         fun suggestPeriodKey(nowMillis: Long = System.currentTimeMillis()): String {
             val h = Calendar.getInstance().apply { timeInMillis = nowMillis }

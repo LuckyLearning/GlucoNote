@@ -66,17 +66,7 @@ fun MainScreen() {
             MainTabs(rootNav = rootNav)
         }
         composable("add") {
-            AddRecordScreen(rootNav, periodArg = "", idArg = "")
-        }
-        composable(
-            route = "add/period/{period}",
-            arguments = listOf(navArgument("period") { type = NavType.StringType })
-        ) { entry ->
-            AddRecordScreen(
-                rootNav,
-                periodArg = entry.arguments?.getString("period").orEmpty(),
-                idArg = ""
-            )
+            AddRecordScreen(rootNav, idArg = "")
         }
         composable(
             route = "add/edit/{id}",
@@ -84,7 +74,6 @@ fun MainScreen() {
         ) { entry ->
             AddRecordScreen(
                 rootNav,
-                periodArg = "",
                 idArg = entry.arguments?.getString("id").orEmpty()
             )
         }

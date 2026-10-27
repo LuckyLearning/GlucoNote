@@ -1,9 +1,5 @@
 package com.gluconote.ui.home
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import com.gluconote.ui.theme.toneColor
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,7 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -72,11 +67,6 @@ fun HomeScreen(navController: NavController) {
             QuickAddBlock(
                 onGuidedAdd = {
                     navController.navigate("add") {
-                        launchSingleTop = true
-                    }
-                },
-                onPeriodClick = { p ->
-                    navController.navigate("add/period/${p.key}") {
                         launchSingleTop = true
                     }
                 }
@@ -223,13 +213,14 @@ private fun HeroMetric(
 }
 
 /**
- * 适老入口：主按钮「记一笔血糖」走完整四步；
- * 五个时段小按钮为捷径（预选状态，从选日期开始）。
+ * 唯一录入入口：「记一笔血糖」走完整四步。
+ *
+ * 刻意不再提供"按状态直进"的时段捷径 —— 同一目的地不挂第二处入口，
+ * 也避免"点捷径 → 跳过第 1 步 → 点错了没法回头"。
  */
 @Composable
 private fun QuickAddBlock(
-    onGuidedAdd: () -> Unit,
-    onPeriodClick: (Period) -> Unit
+    onGuidedAdd: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -240,75 +231,30 @@ private fun QuickAddBlock(
         Column(
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Button(
                 onClick = onGuidedAdd,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 72.dp),
+                    .heightIn(min = 80.dp),
                 shape = MaterialTheme.shapes.extraLarge
             ) {
                 Text(
                     "记一笔血糖",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 24.sp
+                    fontSize = 26.sp
                 )
             }
             Text(
-                "或直接选状态（跳过第 1 步）",
+                "按提示走 4 步：状态 → 日期 → 时间 → 数值",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center
             )
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Period.all.forEach { p ->
-                    Surface(
-                        onClick = { onPeriodClick(p) },
-                        modifier = Modifier
-                            .weight(1f)
-                            .heightIn(min = 56.dp),
-                        shape = MaterialTheme.shapes.medium,
-                        color = MaterialTheme.colorScheme.primaryContainer
-                    ) {
-                        Column(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp, horizontal = 2.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Box(
-                                Modifier
-                                    .size(8.dp)
-                                    .background(p.toneColor(), CircleShape)
-                            )
-                            Spacer(Modifier.height(4.dp))
-                            Text(
-                                when (p) {
-                                    Period.FASTING -> "空腹"
-                                    Period.BREAKFAST -> "早后"
-                                    Period.LUNCH -> "午后"
-                                    Period.DINNER -> "晚后"
-                                    Period.SLEEP -> "睡前"
-                                },
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
-                }
-            }
         }
     }
 }

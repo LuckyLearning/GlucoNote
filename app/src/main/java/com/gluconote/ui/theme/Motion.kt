@@ -58,4 +58,27 @@ object Motion {
             scaleIn(initialScale = 0.985f, animationSpec = ContentTween)) togetherWith
             (fadeOut(animationSpec = tween(160, easing = FastOutSlowInEasing)) +
                 scaleOut(targetScale = 1.01f, animationSpec = tween(160, easing = FastOutSlowInEasing)))
+
+    /**
+     * 向导步骤转场（共享轴 X）。
+     *
+     * 只做「短位移 + 淡入」，刻意不用 scale：整屏缩放会让文字有轻微呼吸感，
+     * 长者会觉得"画面在抖"。旧内容退得比新内容快（90ms vs 180ms），
+     * 压缩两层都半透明的空档，避免透视出底色。
+     */
+    const val WizardInMs = 180
+    const val WizardOutMs = 90
+
+    fun wizardForward(): ContentTransform =
+        (slideInHorizontally(tween(WizardInMs, easing = FastOutSlowInEasing)) { it / 12 } +
+            fadeIn(tween(WizardInMs, easing = FastOutSlowInEasing))) togetherWith
+            (slideOutHorizontally(tween(WizardOutMs, easing = FastOutSlowInEasing)) { -it / 24 } +
+                fadeOut(tween(WizardOutMs, easing = FastOutSlowInEasing)))
+
+    /** 后退：方向整体反过来，动画本身不换，保持"同一个动作倒放"的心智 */
+    fun wizardBackward(): ContentTransform =
+        (slideInHorizontally(tween(WizardInMs, easing = FastOutSlowInEasing)) { -it / 12 } +
+            fadeIn(tween(WizardInMs, easing = FastOutSlowInEasing))) togetherWith
+            (slideOutHorizontally(tween(WizardOutMs, easing = FastOutSlowInEasing)) { it / 24 } +
+                fadeOut(tween(WizardOutMs, easing = FastOutSlowInEasing)))
 }
