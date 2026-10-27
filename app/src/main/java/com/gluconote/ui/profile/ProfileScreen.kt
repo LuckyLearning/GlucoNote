@@ -59,6 +59,7 @@ fun ProfileScreen(navController: NavController) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
+    var showEditTarget by remember { mutableStateOf(false) }
 
     val exportLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.CreateDocument("text/csv")
@@ -112,28 +113,76 @@ fun ProfileScreen(navController: NavController) {
                 )
             }
 
-            // ① 目标血糖范围：决定达标判断，放最上面
+            // ① 目标血糖范围：决定达标判断，默认锁定，需「开启修改」后在弹窗内编辑
             SectionCard("目标血糖范围", "用于判断偏高 / 偏低与达标率") {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    NumberField("空腹下限", ui.fastingMinText, vm::setFastingMin, Modifier.weight(1f))
-                    NumberField("空腹上限", ui.fastingMaxText, vm::setFastingMax, Modifier.weight(1f))
+                    NumberField("空腹下限", ui.fastingMinText, {}, Modifier.weight(1f), enabled = false)
+                    NumberField("空腹上限", ui.fastingMaxText, {}, Modifier.weight(1f), enabled = false)
                 }
                 Spacer(Modifier.height(8.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    NumberField("餐后下限", ui.postMinText, vm::setPostMin, Modifier.weight(1f))
-                    NumberField("餐后上限", ui.postMaxText, vm::setPostMax, Modifier.weight(1f))
+                    NumberField("餐后下限", ui.postMinText, {}, Modifier.weight(1f), enabled = false)
+                    NumberField("餐后上限", ui.postMaxText, {}, Modifier.weight(1f), enabled = false)
                 }
                 Spacer(Modifier.height(12.dp))
                 Button(
-                    onClick = {
-                        vm.save(
-                            onSaved = { scope.launch { snackbar.showSnackbar("已保存") } },
-                            onError = { msg -> scope.launch { snackbar.showSnackbar(msg) } }
-                        )
-                    },
+                    onClick = { showEditTarget = true },
                     modifier = Modifier.fillMaxWidth(),
                     shape = MaterialTheme.shapes.small
-                ) { Text("保存目标范围") }
+                ) { Text("开启修改") }
+            }
+
+            if (showEditTarget) {
+                // 弹窗内使用本地副本编辑，确认时才写回 vm；取消则不改动原值
+                var dFastingMin by remember(showEditTarget) { mutableStateOf(ui.fastingMinText) }
+                var dFastingMax by remember(showEditTarget) { mutableStateOf(ui.fastingMaxText) }
+                var dPostMin by remember(showEditTarget) { mutableStateOf(ui.postMinText) }
+                var dPostMax by remember(showEditTarget) { mutableStateOf(ui.postMaxText) }
+                AlertDialog(
+                    onDismissRequest = { showEditTarget = false },
+                    title = { Text("修改目标血糖范围") },
+                    text = {
+                        Column {
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                NumberField("空腹下限", dFastingMin, { dFastingMin = it }, Modifier.weight(1f))
+                                NumberField("空腹上限", dFastingMax, { dFastingMax = it }, Modifier.weight(1f))
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                NumberField("餐后下限", dPostMin, { dPostMin = it }, Modifier.weight(1f))
+                                NumberField("餐后上限", dPostMax, { dPostMax = it }, Modifier.weight(1f))
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                vm.setFastingMin(dFastingMin)
+                                vm.setFastingMax(dFastingMax)
+                                vm.setPostMin(dPostMin)
+                                vm.setPostMax(dPostMax)
+                                vm.save(
+                                    onSaved = {
+                                        showEditTarget = false
+                                        scope.launch { snackbar.showSnackbar("已保存") }
+                                    },
+                                    onError = { msg ->
+                                        scope.launch { snackbar.showSnackbar(msg) }
+                                    }
+                                )
+                            }
+                        ) { Text("确认") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showEditTarget = false }) { Text("取消") }
+                    }
+                )
             }
 
             // ② 数据备份
@@ -409,7 +458,8 @@ private fun NumberField(
     label: String,
     value: String,
     onValue: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
 ) {
     OutlinedTextField(
         value = value,
@@ -423,6 +473,7 @@ private fun NumberField(
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         modifier = modifier,
         singleLine = true,
+        enabled = enabled,
         shape = MaterialTheme.shapes.small
     )
 }
