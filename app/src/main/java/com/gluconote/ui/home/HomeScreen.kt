@@ -1,7 +1,6 @@
 package com.gluconote.ui.home
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import com.gluconote.ui.theme.toneColor
@@ -19,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -69,11 +70,16 @@ fun HomeScreen(navController: NavController) {
 
         item(key = "quick-add") {
             QuickAddBlock(
+                onGuidedAdd = {
+                    navController.navigate("add") {
+                        launchSingleTop = true
+                    }
+                },
                 onPeriodClick = { p ->
-                navController.navigate("add/period/${p.key}") {
-                    launchSingleTop = true
+                    navController.navigate("add/period/${p.key}") {
+                        launchSingleTop = true
+                    }
                 }
-            }
             )
         }
 
@@ -97,16 +103,15 @@ fun HomeScreen(navController: NavController) {
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            "还没有记录，点上方时段开始",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            "还没有记录，点上方「记一笔血糖」开始",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
                         )
                     }
                 }
             }
         } else {
             items(state.recent, key = { it.id }, contentType = { "record" }) { r ->
-                // 注意：RecordCard 最后一个参数是 onDelete，必须用具名参数，
-                // 否则尾随 lambda 会绑到 onDelete 上（表现为点卡片没反应、右边图标跳编辑）
                 RecordCard(
                     record = r,
                     settings = state.settings,
@@ -178,7 +183,7 @@ private fun HeroCard(
             val periodLabel = if (lastPeriod.isNotBlank()) Period.fromKey(lastPeriod).plainLabel() else ""
             val timeLabel = lastTime?.let { " · ${formatTime(it)} ${formatDate(it)}" } ?: ""
             Text(
-                if (periodLabel.isBlank()) "暂无记录，点下方时段开始"
+                if (periodLabel.isBlank()) "暂无记录，点下方记一笔开始"
                 else "$periodLabel$timeLabel",
                 style = MaterialTheme.typography.bodyMedium,
                 color = onHero.copy(alpha = 0.8f)
@@ -217,9 +222,15 @@ private fun HeroMetric(
     }
 }
 
-/** 快速记录：2 列网格时段块（睡前整行），色点 + 名称 + 说明，单块 ≥64dp（适老） */
+/**
+ * 适老入口：主按钮「记一笔血糖」走完整四步；
+ * 五个时段小按钮为捷径（预选状态，从选日期开始）。
+ */
 @Composable
-private fun QuickAddBlock(onPeriodClick: (Period) -> Unit) {
+private fun QuickAddBlock(
+    onGuidedAdd: () -> Unit,
+    onPeriodClick: (Period) -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLarge,
@@ -232,69 +243,72 @@ private fun QuickAddBlock(onPeriodClick: (Period) -> Unit) {
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            Button(
+                onClick = onGuidedAdd,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 72.dp),
+                shape = MaterialTheme.shapes.extraLarge
+            ) {
+                Text(
+                    "记一笔血糖",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp
+                )
+            }
             Text(
-                "快速记录",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                "或直接选状态（跳过第 1 步）",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
             )
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Period.all.chunked(2).forEach { pair ->
-                    if (pair.size == 2) {
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Period.all.forEach { p ->
+                    Surface(
+                        onClick = { onPeriodClick(p) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = 56.dp),
+                        shape = MaterialTheme.shapes.medium,
+                        color = MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Column(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp, horizontal = 2.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
                         ) {
-                            QuickAddTile(pair[0], onPeriodClick, Modifier.weight(1f))
-                            QuickAddTile(pair[1], onPeriodClick, Modifier.weight(1f))
+                            Box(
+                                Modifier
+                                    .size(8.dp)
+                                    .background(p.toneColor(), CircleShape)
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                when (p) {
+                                    Period.FASTING -> "空腹"
+                                    Period.BREAKFAST -> "早后"
+                                    Period.LUNCH -> "午后"
+                                    Period.DINNER -> "晚后"
+                                    Period.SLEEP -> "睡前"
+                                },
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                textAlign = TextAlign.Center
+                            )
                         }
-                    } else {
-                        QuickAddTile(pair[0], onPeriodClick, Modifier.fillMaxWidth())
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun QuickAddTile(
-    period: Period,
-    onPeriodClick: (Period) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        onClick = { onPeriodClick(period) },
-        modifier = modifier.height(72.dp),
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.primaryContainer,
-        tonalElevation = 0.dp
-    ) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.Center
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Box(Modifier.size(8.dp).background(period.toneColor(), CircleShape))
-                Text(
-                    period.label(),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-            Spacer(Modifier.height(2.dp))
-            Text(
-                period.hint(),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
         }
     }
 }
