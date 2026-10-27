@@ -21,14 +21,12 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -95,34 +93,20 @@ fun RecordsScreen(navController: NavController) {
             TopAppBar(title = { Text("记录") })
         },
         floatingActionButton = {
-            Column(horizontalAlignment = Alignment.End) {
-                AnimatedVisibility(
-                    visible = showScrollTop,
-                    enter = fadeIn(animationSpec = tween(Motion.FabMs)) +
-                        scaleIn(initialScale = 0.85f, animationSpec = tween(Motion.FabMs)),
-                    exit = fadeOut(animationSpec = tween(160)) +
-                        scaleOut(targetScale = 0.85f, animationSpec = tween(160))
+            // 新增入口只保留在首页「记一笔」；这里只留「回到顶部」
+            AnimatedVisibility(
+                visible = showScrollTop,
+                enter = fadeIn(animationSpec = tween(Motion.FabMs)) +
+                    scaleIn(initialScale = 0.85f, animationSpec = tween(Motion.FabMs)),
+                exit = fadeOut(animationSpec = tween(160)) +
+                    scaleOut(targetScale = 0.85f, animationSpec = tween(160))
+            ) {
+                SmallFloatingActionButton(
+                    onClick = { scope.launch { listState.animateScrollToItem(0) } },
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                 ) {
-                    Column(horizontalAlignment = Alignment.End) {
-                        SmallFloatingActionButton(
-                            onClick = { scope.launch { listState.animateScrollToItem(0) } },
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                        ) {
-                            Icon(
-                                Icons.Filled.KeyboardArrowUp,
-                                contentDescription = "回到顶部"
-                            )
-                        }
-                        Spacer(Modifier.height(12.dp))
-                    }
-                }
-                FloatingActionButton(
-                    onClick = { navController.navigate("add") { launchSingleTop = true } },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ) {
-                    Icon(Icons.Filled.Add, contentDescription = "新增记录")
+                    Icon(Icons.Filled.KeyboardArrowUp, contentDescription = "回到顶部")
                 }
             }
         }
@@ -200,7 +184,7 @@ fun RecordsScreen(navController: NavController) {
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        "暂无记录，点右下角新增",
+                                        "暂无记录，去首页点「记一笔」添加",
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }

@@ -14,13 +14,18 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -30,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.gluconote.data.model.GlucoseRecord
 import com.gluconote.data.model.Period
 import com.gluconote.ui.components.RecordCard
 import com.gluconote.util.formatDate
@@ -40,6 +46,7 @@ import java.util.Locale
 fun HomeScreen(navController: NavController) {
     val vm = viewModel<HomeViewModel>()
     val state by vm.uiState.collectAsStateWithLifecycle()
+    var deleting by remember { mutableStateOf<GlucoseRecord?>(null) }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -94,13 +101,33 @@ fun HomeScreen(navController: NavController) {
             }
         } else {
             items(state.recent, key = { it.id }, contentType = { "record" }) { r ->
-                RecordCard(record = r, settings = state.settings) {
-                    navController.navigate("add/edit/${r.id}") { launchSingleTop = true }
-                }
+                // 注意：RecordCard 最后一个参数是 onDelete，必须用具名参数，
+                // 否则尾随 lambda 会绑到 onDelete 上（表现为点卡片没反应、右边图标跳编辑）
+                RecordCard(
+                    record = r,
+                    settings = state.settings,
+                    onClick = { navController.navigate("add/edit/${r.id}") { launchSingleTop = true } },
+                    onDelete = { deleting = r }
+                )
             }
         }
 
         item(key = "bottom-space") { Spacer(Modifier.height(8.dp)) }
+    }
+
+    deleting?.let { r ->
+        AlertDialog(
+            onDismissRequest = { deleting = null },
+            title = { Text("删除记录") },
+            text = { Text("确定删除这条记录？") },
+            confirmButton = {
+                TextButton(onClick = {
+                    deleting = null
+                    vm.delete(r)
+                }) { Text("删除") }
+            },
+            dismissButton = { TextButton(onClick = { deleting = null }) { Text("取消") } }
+        )
     }
 }
 

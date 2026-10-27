@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 data class HomeUiState(
     val todayCount: Int = 0,
@@ -50,4 +51,9 @@ class HomeViewModel(app: android.app.Application) : AndroidViewModel(app) {
         .distinctUntilChanged()
         .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
+
+    /** 删除一条记录（首页「最近」列表右侧删除按钮） */
+    fun delete(r: GlucoseRecord) {
+        viewModelScope.launch { repo.delete(r) }
+    }
 }

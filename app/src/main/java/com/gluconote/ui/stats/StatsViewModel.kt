@@ -32,7 +32,8 @@ import kotlinx.coroutines.flow.update
 data class StatsUiState(
     val settings: Settings = Settings(),
     val filterPeriod: String? = null,
-    val rangeType: RangeType = RangeType.DAY,
+    /** 趋势图默认展示最近 7 天 */
+    val rangeType: RangeType = RangeType.WEEK,
     val granularity: Granularity = Granularity.MONTH,
     val filterPeriodLabel: String? = null,
     val ratePeriods: List<Period> = Period.all,
@@ -48,7 +49,8 @@ class StatsViewModel(app: android.app.Application) : AndroidViewModel(app) {
     private val settingsRepo = SettingsRepository(app)
 
     private val filterPeriod = MutableStateFlow<String?>(null)
-    private val rangeType = MutableStateFlow(RangeType.DAY)
+    // 默认「近 7 天」：一天的数据点太少，趋势几乎没有意义
+    private val rangeType = MutableStateFlow(RangeType.WEEK)
     private val granularity = MutableStateFlow(Granularity.MONTH)
 
     val ui: StateFlow<StatsUiState> = combine(
