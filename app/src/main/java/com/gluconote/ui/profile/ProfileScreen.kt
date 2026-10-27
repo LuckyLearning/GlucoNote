@@ -100,13 +100,13 @@ fun ProfileScreen(navController: NavController) {
         ) {
             Column(Modifier.padding(top = 8.dp)) {
                 Text(
-                    "我的",
+                    "血糖随手记",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "血糖随手记 v${BuildConfig.VERSION_NAME}",
+                    "v${BuildConfig.VERSION_NAME}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

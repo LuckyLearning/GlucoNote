@@ -9,9 +9,12 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,7 +26,6 @@ import androidx.compose.ui.graphics.Color
 import com.gluconote.ui.theme.toneColor
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
@@ -66,7 +68,7 @@ import kotlinx.coroutines.launch
  * 「记录」Tab：分页历史列表；FAB → 新增；点条目 → 编辑。
  * 顶部时段标签固定在列表上方，滚动时不跟着走。
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun RecordsScreen(navController: NavController) {
     val vm = viewModel<RecordsViewModel>()
@@ -95,8 +97,14 @@ fun RecordsScreen(navController: NavController) {
     }
 
     Scaffold(
+        // 外层 MainTabs 的 Scaffold 已消费状态栏/导航栏内边距，
+        // 这里若用默认值会把状态栏高度再叠一次，导致标题上方出现一大段空白。
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            TopAppBar(title = { Text("记录") })
+            TopAppBar(
+                title = { Text("记录") },
+                windowInsets = WindowInsets(0, 0, 0, 0)
+            )
         },
         floatingActionButton = {
             // 新增入口只保留在首页「记一笔」；这里只留「回到顶部」
@@ -128,20 +136,20 @@ fun RecordsScreen(navController: NavController) {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column {
-                    LazyRow(
+                    // 时段标签自动换行：一行放不下折到下一行，全部可见、无需横向滚动
+                    FlowRow(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        item {
-                            PeriodFilterChip(
-                                selected = ui.filterPeriod == null,
-                                onClick = { vm.setFilter(null) },
-                                text = "全部"
-                            )
-                        }
-                        items(Period.all, key = { it.key }) { p ->
+                        PeriodFilterChip(
+                            selected = ui.filterPeriod == null,
+                            onClick = { vm.setFilter(null) },
+                            text = "全部"
+                        )
+                        Period.all.forEach { p ->
                             PeriodFilterChip(
                                 selected = ui.filterPeriod == p.key,
                                 onClick = { vm.setFilter(p.key) },
