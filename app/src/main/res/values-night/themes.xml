@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      深色模式必须用深色窗口底（#0F1511）。
+      原先没有 values-night，深色下窗口底色仍是白色 —— 冷启动和转场都会闪一下白屏。
+    -->
+    <style name="Theme.GlucoNote" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
+</resources>

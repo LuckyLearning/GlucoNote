@@ -1,13 +1,16 @@
 package com.gluconote.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
+import androidx.compose.material3.Surface
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.gluconote.data.model.Settings
@@ -86,12 +89,23 @@ fun GlucoNoteTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
+    val colors = if (darkTheme) DarkColors else LightColors
     androidx.compose.runtime.CompositionLocalProvider(LocalIsDark provides darkTheme) {
         MaterialTheme(
-            colorScheme = if (darkTheme) DarkColors else LightColors,
-            shapes = GlucoShapes,
-            content = content
-        )
+            colorScheme = colors,
+            shapes = GlucoShapes
+        ) {
+            // 关键：给整棵树铺一层不透明背景。
+            // 页面切换用 fade 转场时，两个页面的 alpha 都会短暂 < 1；
+            // 若底下没有不透明底色，就会透出窗口底色（旧版深色下是白色）→ 整屏闪。
+            // 这层 Surface 不参与转场动画，所以是稳定的一层底。
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = colors.background
+            ) {
+                content()
+            }
+        }
     }
 }
 

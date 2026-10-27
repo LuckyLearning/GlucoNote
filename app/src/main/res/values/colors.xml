@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#3F7D54</color>
+    <!-- 与 ui/theme/Theme.kt 的 LightColors.background 保持一致 -->
+    <color name="window_background">#FFF6FAF6</color>
 </resources>

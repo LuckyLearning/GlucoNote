@@ -17,6 +17,8 @@ import androidx.compose.animation.togetherWith
 object Motion {
     const val EnterMs = 280
     const val ExitMs = 220
+    /** 旧页淡出要比新页淡入快，缩短「两层都半透明」的空档，避免透视出底色 */
+    const val ExitFastMs = 140
     const val ContentMs = 240
     const val FabMs = 220
 
@@ -35,19 +37,19 @@ object Motion {
 
     /** Nested push (e.g. Add Record): slight shared-axis X + fade. */
     fun forwardEnter(): EnterTransition =
-        fadeIn(animationSpec = EnterTween) +
+        fadeIn(animationSpec = tween(EnterMs, delayMillis = 40, easing = FastOutSlowInEasing)) +
             slideInHorizontally(animationSpec = tween(EnterMs, easing = FastOutSlowInEasing)) { it / 6 }
 
     fun forwardExit(): ExitTransition =
-        fadeOut(animationSpec = ExitTween) +
+        fadeOut(animationSpec = tween(ExitFastMs, easing = FastOutSlowInEasing)) +
             slideOutHorizontally(animationSpec = tween(ExitMs, easing = FastOutSlowInEasing)) { -it / 14 }
 
     fun popEnter(): EnterTransition =
-        fadeIn(animationSpec = EnterTween) +
+        fadeIn(animationSpec = tween(EnterMs, delayMillis = 40, easing = FastOutSlowInEasing)) +
             slideInHorizontally(animationSpec = tween(EnterMs, easing = FastOutSlowInEasing)) { -it / 14 }
 
     fun popExit(): ExitTransition =
-        fadeOut(animationSpec = ExitTween) +
+        fadeOut(animationSpec = tween(ExitFastMs, easing = FastOutSlowInEasing)) +
             slideOutHorizontally(animationSpec = tween(ExitMs, easing = FastOutSlowInEasing)) { it / 6 }
 
     /** Filter / chip driven content swap. */

@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.GlucoNote" parent="android:Theme.Material.Light.NoActionBar" />
+    <!--
+      窗口底色必须与 Compose 的 colorScheme.background 一致（浅色 #F6FAF6）。
+      否则页面淡入淡出交叠的瞬间会透出窗口底色 = 整屏闪白。
+    -->
+    <style name="Theme.GlucoNote" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
 </resources>
