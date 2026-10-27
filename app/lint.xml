@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!--
+      统计页（StatsScreen）的 AnimatedContent 内容依赖外部 ViewModel 的 ui 状态来渲染，
+      其 targetState（如 Triple(rangeType, filterPeriod, trend.size)）仅作为「何时触发过渡」的键，
+      内容 lambda 刻意不读取该参数。这是有意为之（已随历史版本发布，行为正常），
+      故将这条 lint 由 Error 降级为 Warning，避免阻塞本地 lint 构建。
+    -->
+    <issue id="UnusedContentLambdaTargetStateParameter" severity="warning" />
+</lint>

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
@@ -24,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.gluconote.data.model.GlucoseRecord
 import com.gluconote.data.model.Period
 import com.gluconote.data.model.Settings
+import com.gluconote.ui.components.GlucoseValueBadge
 import com.gluconote.ui.theme.statusColor
 import com.gluconote.util.formatDate
 import com.gluconote.util.formatTime
@@ -87,12 +89,20 @@ fun RecordCard(
                     )
                 }
             }
-            Text(
-                "%.1f".format(Locale.US, record.value),
-                color = statusColor(record.value, record.period, settings),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    "%.1f".format(Locale.US, record.value),
+                    color = statusColor(record.value, record.period, settings),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.height(4.dp))
+                GlucoseValueBadge(
+                    value = record.value,
+                    periodKey = record.period,
+                    settings = settings
+                )
+            }
             if (onDelete != null) {
                 IconButton(onClick = onDelete) {
                     Icon(Icons.Filled.Delete, contentDescription = "删除", tint = MaterialTheme.colorScheme.outline)

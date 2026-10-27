@@ -1,6 +1,9 @@
 package com.gluconote.ui.main
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
@@ -23,6 +26,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
 import com.gluconote.ui.home.HomeScreen
 import com.gluconote.ui.icons.AppIcons
 import com.gluconote.ui.profile.ProfileScreen
@@ -117,19 +122,24 @@ private fun MainTabs(rootNav: NavHostController) {
             }
         }
     ) { padding ->
-        NavHost(
-            navController = tabNav,
-            startDestination = Screen.Home.route,
-            modifier = Modifier.padding(padding),
-            enterTransition = { Motion.tabEnter() },
-            exitTransition = { Motion.tabExit() },
-            popEnterTransition = { Motion.tabEnter() },
-            popExitTransition = { Motion.tabExit() }
+        Box(
+            Modifier.fillMaxSize().padding(padding),
+            contentAlignment = Alignment.TopCenter
         ) {
+            NavHost(
+                navController = tabNav,
+                startDestination = Screen.Home.route,
+                modifier = Modifier.widthIn(max = 720.dp),
+                enterTransition = { Motion.tabEnter() },
+                exitTransition = { Motion.tabExit() },
+                popEnterTransition = { Motion.tabEnter() },
+                popExitTransition = { Motion.tabExit() }
+            ) {
             composable(Screen.Home.route) { HomeScreen(rootNav) }
             composable(Screen.Records.route) { RecordsScreen(rootNav) }
             composable(Screen.Stats.route) { StatsScreen() }
             composable(Screen.Profile.route) { ProfileScreen(rootNav) }
+            }
         }
     }
 }

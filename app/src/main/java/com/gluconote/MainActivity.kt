@@ -39,9 +39,9 @@ class MainActivity : ComponentActivity() {
             // 这里显式提供，避免 collectAsStateWithLifecycle 启动即崩。
             CompositionLocalProvider(LocalLifecycleOwner provides this@MainActivity) {
                 val settingsRepo = remember { SettingsRepository(applicationContext) }
-                val themeKey by settingsRepo.settingsFlow
-                    .map { it.themeMode }
-                    .collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM.key)
+                val themeKey by remember {
+                    settingsRepo.settingsFlow.map { it.themeMode }
+                }.collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM.key)
 
                 val dark = when (ThemeMode.fromKey(themeKey)) {
                     ThemeMode.LIGHT -> false

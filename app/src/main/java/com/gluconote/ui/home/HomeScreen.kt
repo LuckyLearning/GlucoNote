@@ -1,6 +1,10 @@
 package com.gluconote.ui.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import com.gluconote.ui.theme.toneColor
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -213,15 +217,13 @@ private fun HeroMetric(
     }
 }
 
-/** 记一笔：一行 5 个等宽时段块，适合平板宽屏 */
+/** 快速记录：2 列网格时段块（睡前整行），色点 + 名称 + 说明，单块 ≥64dp（适老） */
 @Composable
 private fun QuickAddBlock(onPeriodClick: (Period) -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
@@ -231,20 +233,23 @@ private fun QuickAddBlock(onPeriodClick: (Period) -> Unit) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                "记一笔",
+                "快速记录",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Period.all.forEach { p ->
-                    QuickAddTile(
-                        period = p,
-                        onClick = { onPeriodClick(p) },
-                        modifier = Modifier.weight(1f)
-                    )
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Period.all.chunked(2).forEach { pair ->
+                    if (pair.size == 2) {
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            QuickAddTile(pair[0], onPeriodClick, Modifier.weight(1f))
+                            QuickAddTile(pair[1], onPeriodClick, Modifier.weight(1f))
+                        }
+                    } else {
+                        QuickAddTile(pair[0], onPeriodClick, Modifier.fillMaxWidth())
+                    }
                 }
             }
         }
@@ -254,29 +259,39 @@ private fun QuickAddBlock(onPeriodClick: (Period) -> Unit) {
 @Composable
 private fun QuickAddTile(
     period: Period,
-    onClick: () -> Unit,
+    onPeriodClick: (Period) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
-        onClick = onClick,
-        modifier = modifier.heightIn(min = 56.dp),
-        shape = MaterialTheme.shapes.extraLarge,
+        onClick = { onPeriodClick(period) },
+        modifier = modifier.height(72.dp),
+        shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.primaryContainer,
         tonalElevation = 0.dp
     ) {
-        Box(
+        Column(
             Modifier
                 .fillMaxWidth()
-                .heightIn(min = 56.dp)
-                .padding(horizontal = 4.dp, vertical = 12.dp),
-            contentAlignment = Alignment.Center
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.Center
         ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Box(Modifier.size(8.dp).background(period.toneColor(), CircleShape))
+                Text(
+                    period.label(),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+            Spacer(Modifier.height(2.dp))
             Text(
-                period.label(),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                textAlign = TextAlign.Center,
+                period.hint(),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )

@@ -10,11 +10,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.Color
+import com.gluconote.ui.theme.toneColor
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -116,39 +122,40 @@ fun RecordsScreen(navController: NavController) {
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // 时段标签：固定在列表上方，不随 LazyColumn 滚动
+            // 时段标签：固定在列表上方（吸顶），不随 LazyColumn 滚动
             Surface(
-                color = MaterialTheme.colorScheme.surface,
+                color = MaterialTheme.colorScheme.background,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                LazyRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    item {
-                        FilterChip(
-                            selected = ui.filterPeriod == null,
-                            onClick = { vm.setFilter(null) },
-                            label = { Text("全部") },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = MaterialTheme.colorScheme.primary,
-                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                Column {
+                    LazyRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        item {
+                            PeriodFilterChip(
+                                selected = ui.filterPeriod == null,
+                                onClick = { vm.setFilter(null) },
+                                text = "全部"
                             )
-                        )
-                    }
-                    items(Period.all, key = { it.key }) { p ->
-                        FilterChip(
-                            selected = ui.filterPeriod == p.key,
-                            onClick = { vm.setFilter(p.key) },
-                            label = { Text(p.label()) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = MaterialTheme.colorScheme.primary,
-                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                        }
+                        items(Period.all, key = { it.key }) { p ->
+                            PeriodFilterChip(
+                                selected = ui.filterPeriod == p.key,
+                                onClick = { vm.setFilter(p.key) },
+                                text = p.label(),
+                                dot = p.toneColor()
                             )
-                        )
+                        }
                     }
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(MaterialTheme.colorScheme.outlineVariant)
+                    )
                 }
             }
 
@@ -177,6 +184,20 @@ fun RecordsScreen(navController: NavController) {
                         contentPadding = PaddingValues(top = 4.dp, bottom = 88.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
+                        item(key = "intro") {
+                            Surface(
+                                shape = MaterialTheme.shapes.medium,
+                                color = MaterialTheme.colorScheme.surfaceContainer,
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)
+                            ) {
+                                Text(
+                                    "这里是你的全部测量记录，按时间倒序排列。点击任意记录可编辑、删除需二次确认；要新增请到首页「快速记录」。",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(16.dp)
+                                )
+                            }
+                        }
                         if (grouped.isEmpty()) {
                             item(key = "empty") {
                                 Box(
@@ -261,4 +282,31 @@ fun RecordsScreen(navController: NavController) {
             }
         )
     }
+}
+
+/** 筛选芯片：选中态主色实心；标签含可选色点（与原型一致） */
+@Composable
+private fun PeriodFilterChip(
+    selected: Boolean,
+    onClick: () -> Unit,
+    text: String,
+    dot: Color? = null
+) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                if (dot != null) Box(Modifier.size(8.dp).background(dot, CircleShape))
+                Text(text)
+            }
+        },
+        colors = FilterChipDefaults.filterChipColors(
+            selectedContainerColor = MaterialTheme.colorScheme.primary,
+            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+        )
+    )
 }

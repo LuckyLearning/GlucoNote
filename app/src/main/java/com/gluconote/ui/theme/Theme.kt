@@ -12,7 +12,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.Typography
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.gluconote.data.model.Settings
 import com.gluconote.util.levelOf
 
@@ -81,6 +85,20 @@ private val GlucoShapes = Shapes(
     extraLarge = RoundedCornerShape(28.dp)
 )
 
+/** 排版层级：对齐原型设计系统（大读数 32 / 概览数字 24 / 卡片标题 17 / 正文 16·13 / 标签 14·12·11） */
+private val GlucoTypography = Typography().copy(
+    displaySmall = TextStyle(fontSize = 32.sp, fontWeight = FontWeight.Bold),
+    headlineSmall = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold),
+    titleLarge = TextStyle(fontSize = 22.sp, fontWeight = FontWeight.Bold),
+    titleMedium = TextStyle(fontSize = 17.sp, fontWeight = FontWeight.SemiBold),
+    titleSmall = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.SemiBold),
+    bodyLarge = TextStyle(fontSize = 16.sp),
+    bodySmall = TextStyle(fontSize = 13.sp),
+    labelLarge = TextStyle(fontSize = 14.sp),
+    labelMedium = TextStyle(fontSize = 12.sp),
+    labelSmall = TextStyle(fontSize = 11.sp)
+)
+
 /** 深浅模式标记：状态色、图表文字等非 Material 槽位需要 */
 val LocalIsDark = staticCompositionLocalOf { false }
 
@@ -93,7 +111,8 @@ fun GlucoNoteTheme(
     androidx.compose.runtime.CompositionLocalProvider(LocalIsDark provides darkTheme) {
         MaterialTheme(
             colorScheme = colors,
-            shapes = GlucoShapes
+            shapes = GlucoShapes,
+            typography = GlucoTypography
         ) {
             // 关键：给整棵树铺一层不透明背景。
             // 页面切换用 fade 转场时，两个页面的 alpha 都会短暂 < 1；
