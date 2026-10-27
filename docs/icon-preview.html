@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GlucoNote 图标方案对比</title>
+<style>
+  :root{
+    --ink:#15201A; --ink-2:#4A574F; --muted:#78847C;
+    --bg:#F4F8F4; --card:#FFFFFF; --line:#E3EBE4;
+    --green:#2F7D53; --mint:#BDEECF;
+    --shadow:0 1px 2px rgba(20,40,30,.05), 0 8px 24px -12px rgba(20,40,30,.18);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:40px 24px 72px; background:var(--bg); color:var(--ink);
+    font:15px/1.6 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  }
+  .wrap{max-width:980px;margin:0 auto}
+  h1{font-size:26px;line-height:1.3;margin:0 0 6px;letter-spacing:-.01em}
+  .sub{color:var(--ink-2);margin:0 0 32px;font-size:14px}
+  h2{font-size:17px;margin:0 0 4px;letter-spacing:-.01em}
+  .concept{color:var(--ink-2);font-size:13.5px;margin:0}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:18px;
+    padding:24px; box-shadow:var(--shadow); margin-bottom:20px;
+  }
+  .head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+  .tag{
+    font-size:11.5px;font-weight:600;letter-spacing:.02em;color:var(--green);
+    background:#EAF5EE;border-radius:999px;padding:3px 9px;
+  }
+  .tag.rec{color:#1F6B45;background:#D8F0E2}
+  .stage{display:flex;gap:28px;align-items:center;flex-wrap:wrap}
+  .big{width:150px;height:150px;border-radius:36px;overflow:hidden;flex:none;
+       box-shadow:0 10px 28px -14px rgba(20,40,30,.45)}
+  .big circle-mask{display:block}
+  .round{width:110px;height:110px;border-radius:50%;overflow:hidden;flex:none;
+         box-shadow:0 8px 22px -14px rgba(20,40,30,.4)}
+  svg{display:block;width:100%;height:100%}
+  .ladder{display:flex;gap:22px;align-items:flex-end;flex-wrap:wrap;padding:16px 18px;
+          border-radius:14px;background:var(--bg);border:1px solid var(--line)}
+  .ladder.dark{background:#101713;border-color:#22302a}
+  .sz{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .sz i{display:block;border-radius:26%;overflow:hidden;box-shadow:0 3px 8px -4px rgba(0,0,0,.4)}
+  .sz span{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .ladder.dark .sz span{color:#8C9B92}
+  .rows{display:grid;gap:12px;margin-top:16px}
+  .rowlabel{font-size:11.5px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin:0 0 6px}
+  .pros{margin:16px 0 0;padding:0;list-style:none;display:grid;gap:6px}
+  .pros li{font-size:13px;color:var(--ink-2);padding-left:16px;position:relative}
+  .pros li::before{content:"";position:absolute;left:0;top:8px;width:6px;height:6px;border-radius:2px;background:var(--green)}
+  .pros li.warn::before{background:#C8892B}
+  .cmp{display:flex;gap:34px;align-items:flex-end;padding:22px;border-radius:14px;
+       background:#EFF4EF;border:1px solid var(--line);flex-wrap:wrap}
+  .cmp .sz i{box-shadow:0 2px 6px -3px rgba(0,0,0,.35)}
+  .note{font-size:13px;color:var(--ink-2);background:#FFF8E8;border:1px solid #F0E2BE;
+        border-radius:12px;padding:14px 16px;margin-top:8px}
+  code{font:12.5px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace;background:#EDF2ED;
+       padding:1px 5px;border-radius:5px;color:#2A4636}
+  .foot{color:var(--muted);font-size:12.5px;margin-top:28px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>GlucoNote 应用图标 · 方案对比</h1>
+  <p class="sub">血糖随手记 · 自适应图标（adaptive icon，108×108 画布 / 72 安全区），minSdk 26 全支持。下面每个方案都给出真实多尺寸与浅深底表现，请按「一眼认得出、缩小不糊」两个标准挑。</p>
+
+  <!-- ===== A ===== -->
+  <div class="card">
+    <div class="head">
+      <span class="tag rec">推荐</span>
+      <h2>A · 血滴 · 脉搏</h2>
+      <p class="concept">白色血滴内嵌一条绿色心电折线 —— 一滴血 + 一次心跳，直接对应「血糖监测」。</p>
+    </div>
+
+    <div class="stage">
+      <div class="big">
+        <svg viewBox="0 0 108 108" role="img" aria-label="方案A">
+          <defs>
+            <linearGradient id="bgA" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#3E8F63"/>
+              <stop offset="1" stop-color="#23603D"/>
+            </linearGradient>
+          </defs>
+          <rect width="108" height="108" fill="url(#bgA)"/>
+          <path d="M54,34 C54,34 35,57 35,64 a19,19 0 0,0 38,0 C73,57 54,34 54,34 Z" fill="#FFFFFF"/>
+          <path d="M42,63 L47.5,63 L50.5,56.5 L55,71 L58,63 L66,63" fill="none"
+                stroke="#2E7D53" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="round">
+        <svg viewBox="0 0 108 108" aria-hidden="true">
+          <rect width="108" height="108" fill="url(#bgA)"/>
+          <path d="M54,34 C54,34 35,57 35,64 a19,19 0 0,0 38,0 C73,57 54,34 54,34 Z" fill="#FFFFFF"/>
+          <path d="M42,63 L47.5,63 L50.5,56.5 L55,71 L58,63 L66,63" fill="none"
+                stroke="#2E7D53" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div style="flex:1;min-width:260px">
+        <div class="rowlabel">真实尺寸（浅色桌面 / 深色桌面）</div>
+        <div class="rows">
+          <div class="ladder">
+            <div class="sz"><i style="width:96px;height:96px">
+              <svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#bgA)"/><path d="M54,34 C54,34 35,57 35,64 a19,19 0 0,0 38,0 C73,57 54,34 54,34 Z" fill="#FFF"/><path d="M42,63 L47.5,63 L50.5,56.5 L55,71 L58,63 L66,63" fill="none" stroke="#2E7D53" stroke-width="4.2" stroke-linecap="round"/></svg>
+            </i><span>96</span></div>
+            <div class="sz"><i style="width:72px;height:72px">
+              <svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#bgA)"/><path d="M54,34 C54,34 35,57 35,64 a19,19 0 0,0 38,0 C73,57 54,34 54,34 Z" fill="#FFF"/><path d="M42,63 L47.5,63 L50.5,56.5 L55,71 L58,63 L66,63" fill="none" stroke="#2E7D53" stroke-width="4.2" stroke-linecap="round"/></svg>
+            </i><span>72</span></div>
+            <div class="sz"><i style="width:48px;height:48px">
+              <svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#bgA)"/><path d="M54,34 C54,34 35,57 35,64 a19,19 0 0,0 38,0 C73,57 54,34 54,34 Z" fill="#FFF"/><path d="M42,63 L47.5,63 L50.5,56.5 L55,71 L58,63 L66,63" fill="none" stroke="#2E7D53" stroke-width="4.6" stroke-linecap="round"/></svg>
+            </i><span>48</span></div>
+            <div class="sz"><i style="width:32px;height:32px">
+              <svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#bgA)"/><path d="M54,34 C54,34 35,57 35,64 a19,19 0 0,0 38,0 C73,57 54,34 54,34 Z" fill="#FFF"/><path d="M42,63 L47.5,63 L50.5,56.5 L55,71 L58,63 L66,63" fill="none" stroke="#2E7D53" stroke-width="5.2" stroke-linecap="round"/></svg>
+            </i><span>32</span></div>
+          </div>
+          <div class="ladder dark">
+            <div class="sz"><i style="width:96px;height:96px">
+              <svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#bgA)"/><path d="M54,34 C54,34 35,57 35,64 a19,19 0 0,0 38,0 C73,57 54,34 54,34 Z" fill="#FFF"/><path d="M42,63 L47.5,63 L50.5,56.5 L55,71 L58,63 L66,63" fill="none" stroke="#2E7D53" stroke-width="4.2" stroke-linecap="round"/></svg>
+            </i><span>96</span></div>
+            <div class="sz"><i style="width:72px;height:72px">
+              <svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#bgA)"/><path d="M54,34 C54,34 35,57 35,64 a19,19 0 0,0 38,0 C73,57 54,34 54,34 Z" fill="#FFF"/><path d="M42,63 L47.5,63 L50.5,56.5 L55,71 L58,63 L66,63" fill="none" stroke="#2E7D53" stroke-width="4.2" stroke-linecap="round"/></svg>
+            </i><span>72</span></div>
+            <div class="sz"><i style="width:48px;height:48px">
+              <svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#bgA)"/><path d="M54,34 C54,34 35,57 35,64 a19,19 0 0,0 38,0 C73,57 54,34 54,34 Z" fill="#FFF"/><path d="M42,63 L47.5,63 L50.5,56.5 L55,71 L58,63 L66,63" fill="none" stroke="#2E7D53" stroke-width="4.6" stroke-linecap="round"/></svg>
+            </i><span>48</span></div>
+            <div class="sz"><i style="width:32px;height:32px">
+              <svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#bgA)"/><path d="M54,34 C54,34 35,57 35,64 a19,19 0 0,0 38,0 C73,57 54,34 54,34 Z" fill="#FFF"/><path d="M42,63 L47.5,63 L50.5,56.5 L55,71 L58,63 L66,63" fill="none" stroke="#2E7D53" stroke-width="5.2" stroke-linecap="round"/></svg>
+            </i><span>32</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <ul class="pros">
+      <li>语义双保险：血滴=血糖，折线=监测/健康，比「双水滴」不歧义</li>
+      <li>单一大色块 + 一条线，32px 仍能看出「滴 + 波形」</li>
+      <li>白／深绿高对比（≈5.4:1），桌面任何壁纸上都清楚</li>
+      <li class="warn">折线在小尺寸略细，已按 32px 加粗到 5.2 补偿</li>
+    </ul>
+  </div>
+
+  <!-- ===== B ===== -->
+  <div class="card">
+    <div class="head">
+      <span class="tag">专业向</span>
+      <h2>B · 读数环</h2>
+      <p class="concept">环形刻度 + 中心血滴 —— 像血糖仪的读数环，也暗示「达标率」的环形占比。</p>
+    </div>
+    <div class="stage">
+      <div class="big">
+        <svg viewBox="0 0 108 108" aria-label="方案B">
+          <rect width="108" height="108" fill="url(#bgA)"/>
+          <circle cx="54" cy="54" r="24" fill="none" stroke="#FFFFFF" stroke-opacity=".26" stroke-width="7"/>
+          <circle cx="54" cy="54" r="24" fill="none" stroke="#BDEECF" stroke-width="7"
+                  stroke-linecap="round" stroke-dasharray="113 151" transform="rotate(-90 54 54)"/>
+          <path d="M54,42 C54,42 46,51.5 46,55.5 a8,8 0 0,0 16,0 C62,51.5 54,42 54,42 Z" fill="#FFFFFF"/>
+        </svg>
+      </div>
+      <div class="round">
+        <svg viewBox="0 0 108 108" aria-hidden="true">
+          <rect width="108" height="108" fill="url(#bgA)"/>
+          <circle cx="54" cy="54" r="24" fill="none" stroke="#FFFFFF" stroke-opacity=".26" stroke-width="7"/>
+          <circle cx="54" cy="54" r="24" fill="none" stroke="#BDEECF" stroke-width="7"
+                  stroke-linecap="round" stroke-dasharray="113 151" transform="rotate(-90 54 54)"/>
+          <path d="M54,42 C54,42 46,51.5 46,55.5 a8,8 0 0,0 16,0 C62,51.5 54,42 54,42 Z" fill="#FFFFFF"/>
+        </svg>
+      </div>
+      <div style="flex:1;min-width:260px">
+        <div class="rowlabel">真实尺寸</div>
+        <div class="rows">
+          <div class="ladder">
+            <div class="sz"><i style="width:96px;height:96px">
+              <svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#bgA)"/><circle cx="54" cy="54" r="24" fill="none" stroke="#FFF" stroke-opacity=".26" stroke-width="7"/><circle cx="54" cy="54" r="24" fill="none" stroke="#BDEECF" stroke-width="7" stroke-linecap="round" stroke-dasharray="113 151" transform="rotate(-90 54 54)"/><path d="M54,42 C54,42 46,51.5 46,55.5 a8,8 0 0,0 16,0 C62,51.5 54,42 54,42 Z" fill="#FFF"/></svg>
+            </i><span>96</span></div>
+            <div class="sz"><i style="width:72px;height:72px">
+              <svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#bgA)"/><circle cx="54" cy="54" r="24" fill="none" stroke="#FFF" stroke-opacity=".26" stroke-width="7"/><circle cx="54" cy="54" r="24" fill="none" stroke="#BDEECF" stroke-width="7" stroke-linecap="round" stroke-dasharray="113 151" transform="rotate(-90 54 54)"/><path d="M54,42 C54,42 46,51.5 46,55.5 a8,8 0 0,0 16,0 C62,51.5 54,42 54,42 Z" fill="#FFF"/></svg>
+            </i><span>72</span></div>
+            <div class="sz"><i style="width:48px;height:48px">
+              <svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#bgA)"/><circle cx="54" cy="54" r="25" fill="none" stroke="#FFF" stroke-opacity=".26" stroke-width="8"/><circle cx="54" cy="54" r="25" fill="none" stroke="#BDEECF" stroke-width="8" stroke-linecap="round" stroke-dasharray="118 157" transform="rotate(-90 54 54)"/><path d="M54,41 C54,41 45,51 45,55.5 a9,9 0 0,0 18,0 C63,51 54,41 54,41 Z" fill="#FFF"/></svg>
+            </i><span>48</span></div>
+            <div class="sz"><i style="width:32px;height:32px">
+              <svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#bgA)"/><circle cx="54" cy="54" r="26" fill="none" stroke="#BDEECF" stroke-width="9" transform="rotate(-90 54 54)"/><path d="M54,40 C54,40 44,51 44,56 a10,10 0 0,0 20,0 C64,51 54,40 54,40 Z" fill="#FFF"/></svg>
+            </i><span>32</span></div>
+          </div>
+          <div class="ladder dark">
+            <div class="sz"><i style="width:48px;height:48px">
+              <svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#bgA)"/><circle cx="54" cy="54" r="25" fill="none" stroke="#FFF" stroke-opacity=".26" stroke-width="8"/><circle cx="54" cy="54" r="25" fill="none" stroke="#BDEECF" stroke-width="8" stroke-linecap="round" stroke-dasharray="118 157" transform="rotate(-90 54 54)"/><path d="M54,41 C54,41 45,51 45,55.5 a9,9 0 0,0 18,0 C63,51 54,41 54,41 Z" fill="#FFF"/></svg>
+            </i><span>48</span></div>
+            <div class="sz"><i style="width:32px;height:32px">
+              <svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#bgA)"/><circle cx="54" cy="54" r="26" fill="none" stroke="#BDEECF" stroke-width="9" transform="rotate(-90 54 54)"/><path d="M54,40 C54,40 44,51 44,56 a10,10 0 0,0 20,0 C64,51 54,40 54,40 Z" fill="#FFF"/></svg>
+            </i><span>32</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ul class="pros">
+      <li>最「医疗仪器」：环 + 滴，气质专业、不廉价</li>
+      <li>环形天然承载「达标率」的产品核心指标</li>
+      <li class="warn">环与滴两个结构，32px 下细节会并成一团，需简化（见 32px 写法）</li>
+      <li class="warn">环形进度容易与「加载中」混淆</li>
+    </ul>
+  </div>
+
+  <!-- ===== C ===== -->
+  <div class="card">
+    <div class="head">
+      <span class="tag">语义向</span>
+      <h2>C · 血滴 · 随记</h2>
+      <p class="concept">血滴里三条记录线 —— 强调「随手记」，把产品名里的「笔记」讲出来。</p>
+    </div>
+    <div class="stage">
+      <div class="big">
+        <svg viewBox="0 0 108 108" aria-label="方案C">
+          <rect width="108" height="108" fill="url(#bgA)"/>
+          <path d="M54,32 C54,32 33,56 33,64 a21,21 0 0,0 42,0 C75,56 54,32 54,32 Z" fill="#FFFFFF"/>
+          <path d="M45,61 H63 M45,68 H60 M45,75 H56" fill="none"
+                stroke="#2E7D53" stroke-width="3.8" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="round">
+        <svg viewBox="0 0 108 108" aria-hidden="true">
+          <rect width="108" height="108" fill="url(#bgA)"/>
+          <path d="M54,32 C54,32 33,56 33,64 a21,21 0 0,0 42,0 C75,56 54,32 54,32 Z" fill="#FFFFFF"/>
+          <path d="M45,61 H63 M45,68 H60 M45,75 H56" fill="none"
+                stroke="#2E7D53" stroke-width="3.8" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div style="flex:1;min-width:260px">
+        <div class="rowlabel">真实尺寸</div>
+        <div class="rows">
+          <div class="ladder">
+            <div class="sz"><i style="width:96px;height:96px">
+              <svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#bgA)"/><path d="M54,32 C54,32 33,56 33,64 a21,21 0 0,0 42,0 C75,56 54,32 54,32 Z" fill="#FFF"/><path d="M45,61 H63 M45,68 H60 M45,75 H56" fill="none" stroke="#2E7D53" stroke-width="3.8" stroke-linecap="round"/></svg>
+            </i><span>96</span></div>
+            <div class="sz"><i style="width:72px;height:72px">
+              <svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#bgA)"/><path d="M54,32 C54,32 33,56 33,64 a21,21 0 0,0 42,0 C75,56 54,32 54,32 Z" fill="#FFF"/><path d="M45,61 H63 M45,68 H60 M45,75 H56" fill="none" stroke="#2E7D53" stroke-width="3.8" stroke-linecap="round"/></svg>
+            </i><span>72</span></div>
+            <div class="sz"><i style="width:48px;height:48px">
+              <svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#bgA)"/><path d="M54,31 C54,31 32,56 32,64 a22,22 0 0,0 44,0 C76,56 54,31 54,31 Z" fill="#FFF"/><path d="M44,60 H64 M44,68 H60" fill="none" stroke="#2E7D53" stroke-width="5" stroke-linecap="round"/></svg>
+            </i><span>48</span></div>
+            <div class="sz"><i style="width:32px;height:32px">
+              <svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#bgA)"/><path d="M54,30 C54,30 31,55 31,64 a23,23 0 0,0 46,0 C77,55 54,30 54,30 Z" fill="#FFF"/><path d="M43,60 H65 M43,70 H58" fill="none" stroke="#2E7D53" stroke-width="6" stroke-linecap="round"/></svg>
+            </i><span>32</span></div>
+          </div>
+          <div class="ladder dark">
+            <div class="sz"><i style="width:48px;height:48px">
+              <svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#bgA)"/><path d="M54,31 C54,31 32,56 32,64 a22,22 0 0,0 44,0 C76,56 54,31 54,31 Z" fill="#FFF"/><path d="M44,60 H64 M44,68 H60" fill="none" stroke="#2E7D53" stroke-width="5" stroke-linecap="round"/></svg>
+            </i><span>48</span></div>
+            <div class="sz"><i style="width:32px;height:32px">
+              <svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#bgA)"/><path d="M54,30 C54,30 31,55 31,64 a23,23 0 0,0 46,0 C77,55 54,30 54,30 Z" fill="#FFF"/><path d="M43,60 H65 M43,70 H58" fill="none" stroke="#2E7D53" stroke-width="6" stroke-linecap="round"/></svg>
+            </i><span>32</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ul class="pros">
+      <li>「记一笔」产品定位最直白，和首页快捷记录的心智一致</li>
+      <li>线条少、留白多，小尺寸干净</li>
+      <li class="warn">三条线像「文档 / 笔记 App」，医疗属性弱于 A</li>
+      <li class="warn">缩到 32px 时三条线会糊，需减到两条</li>
+    </ul>
+  </div>
+
+  <!-- 桌面密度对比 -->
+  <div class="card">
+    <div class="head"><h2>同屏密度对比（48px 实际观感）</h2></div>
+    <div class="cmp">
+      <div class="sz"><i style="width:48px;height:48px">
+        <svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#bgA)"/><path d="M54,34 C54,34 35,57 35,64 a19,19 0 0,0 38,0 C73,57 54,34 54,34 Z" fill="#FFF"/><path d="M42,63 L47.5,63 L50.5,56.5 L55,71 L58,63 L66,63" fill="none" stroke="#2E7D53" stroke-width="4.6" stroke-linecap="round"/></svg>
+      </i><span>A 血滴脉搏</span></div>
+      <div class="sz"><i style="width:48px;height:48px">
+        <svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#bgA)"/><circle cx="54" cy="54" r="25" fill="none" stroke="#FFF" stroke-opacity=".26" stroke-width="8"/><circle cx="54" cy="54" r="25" fill="none" stroke="#BDEECF" stroke-width="8" stroke-linecap="round" stroke-dasharray="118 157" transform="rotate(-90 54 54)"/><path d="M54,41 C54,41 45,51 45,55.5 a9,9 0 0,0 18,0 C63,51 54,41 54,41 Z" fill="#FFF"/></svg>
+      </i><span>B 读数环</span></div>
+      <div class="sz"><i style="width:48px;height:48px">
+        <svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#bgA)"/><path d="M54,31 C54,31 32,56 32,64 a22,22 0 0,0 44,0 C76,56 54,31 54,31 Z" fill="#FFF"/><path d="M44,60 H64 M44,68 H60" fill="none" stroke="#2E7D53" stroke-width="5" stroke-linecap="round"/></svg>
+      </i><span>C 血滴随记</span></div>
+      <div class="sz"><i style="width:48px;height:48px">
+        <svg viewBox="0 0 108 108"><rect width="108" height="108" fill="#3F7D54"/><path d="M54,30 C54,30 34,54 34,68 a20,20 0 0,0 40,0 C74,54 54,30 54,30 Z" fill="#FFF"/><path d="M54,44 C54,44 46,56 46,64 a8,8 0 0,0 16,0 C62,56 54,44 54,44 Z" fill="#3F7D54"/></svg>
+      </i><span>现状（参考）</span></div>
+    </div>
+    <div class="note">
+      <b>判断结论：</b>A 在 32–96px 全域都保持「滴 + 波形」两个可辨特征，且不与「喝水提醒」混淆，推荐作为正式图标。B 更专业但小尺寸风险高，C 偏笔记类。若你更想要「医疗专业感」，可选 B 并按 32px 写法简化。
+    </div>
+  </div>
+
+  <p class="foot">画布 108×108，安全区 72dp（内容控制在中心 66dp 圆内）；实体色 <code>#2F7D53 → #23603D</code> 渐变底，主图纯白；深色主题下与 App 主色一致。</p>
+</div>
+</body>
+</html>

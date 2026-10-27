@@ -1,12 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 图标前景：白色血滴 + 绿色心电波形（一滴血 + 一次心跳 = 血糖监测）
+     画布 108×108，内容控制在中心 66dp 安全区内（x 35..73 / y 34..83） -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- 血滴主体 -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,30 C54,30 34,54 34,68 a20,20 0 0,0 40,0 C74,54 54,30 54,30 Z" />
+        android:pathData="M54,34 C54,34 35,57 35,64 a19,19 0 0,0 38,0 C73,57 54,34 54,34 Z" />
+
+    <!-- 心电波形（与背景同族的深绿，视觉上像从血滴里镂空出来） -->
     <path
-        android:fillColor="#3F7D54"
-        android:pathData="M54,44 C54,44 46,56 46,64 a8,8 0 0,0 16,0 C62,56 54,44 54,44 Z" />
+        android:fillColor="#00000000"
+        android:strokeColor="#2E7D53"
+        android:strokeWidth="4.2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M42,63 L47.5,63 L50.5,56.5 L55,71 L58,63 L66,63" />
 </vector>
