@@ -1,7 +1,7 @@
 // 版本号单一来源：改版本只改这两行即可（scripts/release.sh 与 CI 都按此格式解析）。
 // ⚠️ 故意不放进 Version Catalog：release.sh 用 grep 按固定文本格式解析。
-val appVersionName = "1.2.6"
-val appVersionCode = 13
+val appVersionName = "1.2.7"
+val appVersionCode = 14
 
 plugins {
     id("com.android.application")
