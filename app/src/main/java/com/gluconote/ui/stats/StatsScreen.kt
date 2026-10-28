@@ -3,6 +3,8 @@ package com.gluconote.ui.stats
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,8 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -38,6 +38,7 @@ import com.gluconote.util.RateResult
 import com.gluconote.util.StatsResult
 import java.util.Locale
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun StatsScreen() {
     val vm = viewModel<StatsViewModel>()
@@ -51,16 +52,17 @@ fun StatsScreen() {
             Column {
                 Text("\u6309\u6807\u7b7e\u7b5b\u9009", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    item {
-                        FilterChip(
-                            selected = ui.filterPeriod == null,
-                            onClick = { vm.setFilter(null) },
-                            label = { Text("\u5168\u90e8") },
-                            colors = chipColors()
-                        )
-                    }
-                    items(Period.all, key = { it.key }) { p ->
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = ui.filterPeriod == null,
+                        onClick = { vm.setFilter(null) },
+                        label = { Text("\u5168\u90e8") },
+                        colors = chipColors()
+                    )
+                    Period.all.forEach { p ->
                         FilterChip(
                             selected = ui.filterPeriod == p.key,
                             onClick = { vm.setFilter(p.key) },
@@ -76,8 +78,11 @@ fun StatsScreen() {
             Column {
                 Text("\u8d8b\u52bf\u56fe", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(RangeType.entries, key = { it.name }) { t ->
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    RangeType.entries.forEach { t ->
                         FilterChip(
                             selected = ui.rangeType == t,
                             onClick = { vm.setRangeType(t) },
@@ -153,8 +158,11 @@ fun StatsScreen() {
             Column {
                 Text("\u65e5 / \u6708 / \u5e74\u805a\u5408\u7edf\u8ba1", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(Granularity.entries, key = { it.name }) { g ->
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Granularity.entries.forEach { g ->
                         FilterChip(
                             selected = ui.granularity == g,
                             onClick = { vm.setGranularity(g) },
