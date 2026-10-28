@@ -5,7 +5,17 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.os.Build
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,8 +33,11 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -37,8 +50,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -221,12 +238,15 @@ fun ProfileScreen(navController: NavController) {
                 )
             }
 
-            // 数据备份：低频操作，刻意放在页面最末并弱化（无卡片底色、小号文字按钮），
-            // 避免占据主视线被误触。导入/导出本身还会经过系统文件选择器，不会误改数据。
-            SectionCard(
-                title = "数据备份（低频）",
+            // 数据备份：低频且不可逆（导入会写入数据），收纳到页面最末的折叠区。
+            // 默认收起，点标题行才展开导出 / 导入 —— 滚动时不会误触；
+            // 展开状态刻意不做持久化，每次进「我的」都是收起态。
+            var backupOpen by rememberSaveable { mutableStateOf(false) }
+            CollapsedSection(
+                title = "数据备份",
                 subtitle = "CSV 可发给医生，也可用于换机迁移",
-                subdued = true
+                expanded = backupOpen,
+                onToggle = { backupOpen = !backupOpen }
             ) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     val weak = ButtonDefaults.textButtonColors(
@@ -250,37 +270,21 @@ fun ProfileScreen(navController: NavController) {
     }
 }
 
-/**
- * 小节卡片：统一外观（圆角、零阴影、浅底 + 可选说明）。
- *
- * [subdued] = true 时降为页面底色 + 常规字重 + 次级文字色，视觉上"退到背景"，
- * 用于低频且不希望被顺手点到的区块（如页面最末的数据备份）。
- */
+/** 小节卡片：统一外观（圆角、零阴影、浅底 + 可选说明） */
 @Composable
 private fun SectionCard(
     title: String,
     subtitle: String? = null,
-    subdued: Boolean = false,
     content: @Composable () -> Unit
 ) {
     Card(
         Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = if (subdued) MaterialTheme.colorScheme.surface
-            else MaterialTheme.colorScheme.surfaceContainer
-        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(Modifier.fillMaxWidth().padding(16.dp)) {
-            Text(
-                title,
-                style = if (subdued) MaterialTheme.typography.bodyMedium
-                else MaterialTheme.typography.titleMedium,
-                fontWeight = if (subdued) FontWeight.Normal else FontWeight.SemiBold,
-                color = if (subdued) MaterialTheme.colorScheme.onSurfaceVariant
-                else MaterialTheme.colorScheme.onSurface
-            )
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             if (subtitle != null) {
                 Spacer(Modifier.height(2.dp))
                 Text(
@@ -291,6 +295,71 @@ private fun SectionCard(
             }
             Spacer(Modifier.height(12.dp))
             content()
+        }
+    }
+}
+
+/**
+ * 可收纳的弱化区块：默认收起，点标题行展开内容。
+ *
+ * 用于低频、不希望被顺手点到的功能（如数据备份）。折叠态只占一行文字高度，
+ * 既不占主视线，也让"误触"在物理上不可能发生 —— 必须先展开才看得到操作按钮。
+ * 折叠态用页面底色（不上卡片），箭头随展开状态 180° 旋转，动画 200ms。
+ */
+@Composable
+private fun CollapsedSection(
+    title: String,
+    subtitle: String,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    val chevron by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        animationSpec = tween(200, easing = FastOutSlowInEasing),
+        label = "chevron"
+    )
+    Column(Modifier.fillMaxWidth()) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clip(MaterialTheme.shapes.large)
+                .clickable(onClick = onToggle)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
+                )
+            }
+            Icon(
+                Icons.Filled.KeyboardArrowDown,
+                contentDescription = if (expanded) "收起$title" else "展开$title",
+                tint = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.size(20.dp).rotate(chevron)
+            )
+        }
+        AnimatedVisibility(
+            visible = expanded,
+            enter = expandVertically(
+                animationSpec = tween(200, easing = FastOutSlowInEasing)
+            ) + fadeIn(tween(160)),
+            exit = shrinkVertically(
+                animationSpec = tween(160, easing = FastOutSlowInEasing)
+            ) + fadeOut(tween(100))
+        ) {
+            Box(Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, bottom = 8.dp)) {
+                content()
+            }
         }
     }
 }
