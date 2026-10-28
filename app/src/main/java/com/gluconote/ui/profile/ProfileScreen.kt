@@ -185,23 +185,7 @@ fun ProfileScreen(navController: NavController) {
                 )
             }
 
-            // ② 数据备份
-            SectionCard("数据备份", "CSV 可发给医生，也可用于换机迁移") {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
-                        onClick = { exportLauncher.launch("gluconote_export.csv") },
-                        modifier = Modifier.weight(1f),
-                        shape = MaterialTheme.shapes.small
-                    ) { Text("导出 CSV") }
-                    Button(
-                        onClick = { importLauncher.launch(arrayOf("text/csv", "*/*")) },
-                        modifier = Modifier.weight(1f),
-                        shape = MaterialTheme.shapes.small
-                    ) { Text("导入备份") }
-                }
-            }
-
-            // ③ 外观：样式偏好，放在数据/目标之后
+            // ② 外观：样式偏好
             SectionCard("外观", "深色模式下配色、图表与状态栏图标会一起切换") {
                 Row(
                     Modifier.fillMaxWidth(),
@@ -237,26 +221,66 @@ fun ProfileScreen(navController: NavController) {
                 )
             }
 
+            // 数据备份：低频操作，刻意放在页面最末并弱化（无卡片底色、小号文字按钮），
+            // 避免占据主视线被误触。导入/导出本身还会经过系统文件选择器，不会误改数据。
+            SectionCard(
+                title = "数据备份（低频）",
+                subtitle = "CSV 可发给医生，也可用于换机迁移",
+                subdued = true
+            ) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val weak = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    TextButton(
+                        onClick = { exportLauncher.launch("gluconote_export.csv") },
+                        modifier = Modifier.weight(1f),
+                        colors = weak
+                    ) { Text("导出 CSV", style = MaterialTheme.typography.bodyMedium) }
+                    TextButton(
+                        onClick = { importLauncher.launch(arrayOf("text/csv", "*/*")) },
+                        modifier = Modifier.weight(1f),
+                        colors = weak
+                    ) { Text("导入备份", style = MaterialTheme.typography.bodyMedium) }
+                }
+            }
+
             Spacer(Modifier.height(8.dp))
         }
     }
 }
 
-/** 小节卡片：统一外观（圆角、零阴影、浅底 + 可选说明） */
+/**
+ * 小节卡片：统一外观（圆角、零阴影、浅底 + 可选说明）。
+ *
+ * [subdued] = true 时降为页面底色 + 常规字重 + 次级文字色，视觉上"退到背景"，
+ * 用于低频且不希望被顺手点到的区块（如页面最末的数据备份）。
+ */
 @Composable
 private fun SectionCard(
     title: String,
     subtitle: String? = null,
+    subdued: Boolean = false,
     content: @Composable () -> Unit
 ) {
     Card(
         Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        colors = CardDefaults.cardColors(
+            containerColor = if (subdued) MaterialTheme.colorScheme.surface
+            else MaterialTheme.colorScheme.surfaceContainer
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(Modifier.fillMaxWidth().padding(16.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(
+                title,
+                style = if (subdued) MaterialTheme.typography.bodyMedium
+                else MaterialTheme.typography.titleMedium,
+                fontWeight = if (subdued) FontWeight.Normal else FontWeight.SemiBold,
+                color = if (subdued) MaterialTheme.colorScheme.onSurfaceVariant
+                else MaterialTheme.colorScheme.onSurface
+            )
             if (subtitle != null) {
                 Spacer(Modifier.height(2.dp))
                 Text(
